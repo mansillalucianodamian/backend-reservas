@@ -1,53 +1,43 @@
-import connectToMongoDB from "./config/configMongoDB.config.js";
-import express from 'express'
-import authRouter from "./routes/auth.router.js";
-import workspaceRouter from "./routes/workspace.router.js";
-import randomMiddleware from "./middlewares/random.middleware.js";
-import mailTransporter from "./config/mailTransporter.config.js";
-import ENVIROMENT from "./config/enviroment.config.js";
-import cors from 'cors'
-import memberRouter from "./routes/member.router.js";
-import MessagesChannelRepository from "./repositories/messageChannel.repository.js";
+import express from 'express';
+import cors from 'cors';
+import ENVIROMENT from './config/enviroment.config.js';
 
-connectToMongoDB()
+// Conexión MySQL
+import { pool } from './config/db.js';
 
-const app = express()
+// Routers
+import authRouter from './routes/auth.router.js';
+import workspaceRouter from './routes/workspace.router.js';
+import memberRouter from './routes/member.router.js';
 
-//configuro a mi Api como publica, cualquier dominio puede hacer peticiones
-app.use(cors())
+// Otros
+import randomMiddleware from './middlewares/random.middleware.js';
+import mailTransporter from './config/mailTransporter.config.js';
+import MessagesChannelRepository from './repositories/messageChannel.repository.js';
 
-app.use(express.json())
+const app = express();
 
-//Todas las consultas que empiezen con /api/auth va a ser gestionadas por el authRouter
-app.use('/api/auth', authRouter)
-app.use('/api/workspace', workspaceRouter)
-app.use('/api/member', memberRouter)
+// Configuración global
+app.use(cors());
+app.use(express.json());
 
-/* mailTransporter.sendMail({
-    from: ENVIROMENT.GMAIL_USER, //desde quien-
-    to: "lucho878@gmail.com", //a quien
-    subject: 'Prueba', //asunto
-    html: '<h1>Hola desde Node JS</h1>', //cuerpo
+// Rutas principales
+app.use('/api/auth', authRouter);
+app.use('/api/workspace', workspaceRouter);
+app.use('/api/member', memberRouter);
 
-}) */
+// Endpoint de prueba para verificar conexión MySQL
+app.get('/ping', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT 1 + 1 AS result');
+    res.json({ message: 'Conexión OK', result: rows[0].result });
+  } catch (error) {
+    console.error('[SERVER ERROR]: Fallo en la conexión', error);
+    res.status(500).json({ error: 'Error en la conexión a MySQL' });
+  }
+});
 
-
-
-
-
-
-app.listen(
-    ENVIROMENT.PORT || 8080,
-    () => {
-        console.log(`Tu servidor se esta ejecutando correctamente en el puerto ${ENVIROMENT.PORT}`)
-    }
-)
-
-/* MessagesChannelRepository.create(
-    "69021f8d1f59e8d52c3e60f8",
-    "68f8d8cc6968605f86bc6c90",
-    'hola'
-) */
-/* MessagesChannelRepository.getAllByChannelId("69021f8d1f59e8d52c3e60f8").then(
-    (messages) => console.log(messages[0])
-) */
+// Servidor
+app.listen(ENVIROMENT.PORT || 8080, () => {
+  console.log(`Tu servidor se está ejecutando correctamente en el puerto ${ENVIROMENT.PORT || 8080}`);
+});
