@@ -13,13 +13,22 @@ authRouter.post(
     AuthController.register
 )
 authRouter.get(
-    '/verify-email/:verification_token',
+    '/verify-email/:token', 
     AuthController.verifyEmail
 )
+
 authRouter.post(
     '/login',
     validateRequest(loginSchema),
     AuthController.login
 )
+authRouter.post(
+    '/forgot-password', 
+    AuthController.forgotPassword);
+
+authRouter.post(
+    '/reset-password/:reset_token', 
+    AuthController.resetPassword);
+
 
 export default authRouter

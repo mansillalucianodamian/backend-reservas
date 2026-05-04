@@ -1,105 +1,116 @@
 import ENVIROMENT from "../config/enviroment.config.js";
 import { ServerError } from "../error.js";
-import AuthService from "../services/auth.service.js";
+import AuthService from "../services/AuthService.js";
+import PasswordService from "../services/PasswordService.js";
 
 class AuthController {
-    static async register(request, response) {
+    static async register(req, res) {
         try {
-            //console.log("Datos recibidos", request.body)
-            const { email, password, name } = request.body
+            // Desestructuramos el body
+            const { nombre, apellido, dni, telefono, email, password, rol } = req.body;
 
-            await AuthService.register(email, password, name)
-            response.status(200).json({
+            // Pasamos el objeto completo al servicio
+            await AuthService.register({
+                nombre,
+                apellido,
+                dni,
+                telefono,
+                email,
+                password,
+                rol
+            });
+
+            // Respuesta de éxito
+            return res.status(201).json({
                 ok: true,
-                message: 'Usuario registrado con exito',
+                message: 'Usuario registrado con éxito',
                 status: 201
-            })
-
-        }
-        catch (error) {
+            });
+        } catch (error) {
             if (error.status) {
-                
-                response.status(error.status).send({
+                return res.status(error.status).json({
                     ok: false,
                     message: error.message,
                     status: error.status
-                })
-            }
-            else {
-                console.error(
-                    'ERROR AL REGISTRAR', error
-                )
-                response.status(500).send({
+                });
+            } else {
+                console.error('ERROR AL REGISTRAR', error);
+                return res.status(500).json({
                     ok: false,
                     message: 'Error interno del servidor',
                     status: 500
-                })
+                });
             }
         }
     }
-    static async verifyEmail(request, response) {
+
+
+    static async verifyEmail(req, res) {
         try {
-            const { verification_token } = request.params
-
-            await AuthService.verifyEmail(verification_token)
-            response.redirect(
-                ENVIROMENT.URL_FRONTEND + '/login?from=verified_email'
-            )
-
-        }
-        catch (error) {
-            //TODO: Si hay algun fallo reeviar mail de validacion 
-
-            if(error.status){
-                response.send(
-                    `<h1>${error.message}</h1>`
-                )
-            }
-            else {
-                console.error(
-                    'ERROR AL VERIFICAR CORREO', error
-                )
-                response.status(500).json(
-                    '<h1>Error en el servidor, intentelo mas tarde</h1>'
-                )
-            }
+            const { token } = req.params; // lo tomamos de params
+            await AuthService.verifyEmail(token);
+            res.json({ ok: true, message: 'Email verificado con éxito' });
+        } catch (error) {
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || 'Error al verificar email'
+            });
         }
     }
-    static async login (request, response) {
-        try {
-            const { email, password } = request.body
 
-            const { auth_token } = await AuthService.login(email, password)
-            return response.json({
+
+    static async login(req, res) {
+        try {
+            const { email, password } = req.body;
+
+            // Ahora AuthService.login devuelve { auth_token, user }
+            const { auth_token, user } = await AuthService.login(email, password);
+
+            return res.status(200).json({
                 ok: true,
-                message: 'Usuario logueado con exito',
-                status: 200,
-                body: {
-                    auth_token
-                }
-            })
-        }
-        catch (error) {
-            if (error.status) {
-                response.send({
-                    ok: false,
-                    message: error.message,
-                    status: error.status
-                })
-            }
-            else {
-                console.error(
-                    'ERROR AL REGISTRAR', error
-                )
-                response.send({
-                    ok: false,
-                    message: 'Error interno del servidor',
-                    status: 500
-                })
-            }
+                message: 'Usuario logueado con éxito',
+                token: auth_token,   // JWT firmado
+                user                 // datos básicos del usuario (id, nombre, apellido, email, rol)
+            });
+        } catch (error) {
+            console.error('Error al loguear', error);
+
+            return res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || 'Error interno del servidor'
+            });
         }
     }
+
+
+    static async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+            const result = await PasswordService.forgotPassword(email);
+            res.json(result);
+        } catch (error) {
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || 'Error al enviar correo de recuperación'
+            });
+        }
+    }
+
+    static async resetPassword(req, res) {
+        try {
+            const { reset_token } = req.params;
+            const { new_password } = req.body;
+            const result = await PasswordService.resetPassword(reset_token, new_password);
+            res.json(result);
+        } catch (error) {
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || 'Error al restablecer contraseña'
+            });
+        }
+    }
+
+
 }
 
-
-export default AuthController
+export default AuthController;
