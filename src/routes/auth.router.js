@@ -12,6 +12,7 @@ authRouter.post(
     validateRequest(registerSchema),
     AuthController.register
 )
+
 authRouter.get(
     '/verify-email/:token', 
     AuthController.verifyEmail

@@ -6,7 +6,8 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 const reservasRouter = Router();
 
 // CRUD básico
-reservasRouter.get("/", authMiddleware, roleMiddleware('recepcionista','super_admin'), ReservaController.getAll);
+/* reservasRouter.get("/", authMiddleware, roleMiddleware('recepcionista','super_admin'), ReservaController.getAll); */
+reservasRouter.get("/", ReservaController.getAll);
 reservasRouter.get("/:id", authMiddleware, ReservaController.getById);
 reservasRouter.post("/", authMiddleware, roleMiddleware('usuario'), ReservaController.create);
 reservasRouter.put("/:id", authMiddleware, roleMiddleware('recepcionista','super_admin'), ReservaController.update);
