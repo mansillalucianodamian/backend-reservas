@@ -34,7 +34,7 @@ class PasswordService {
             html: `
         <h1>Restablece tu contraseña</h1>
         <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
-        <a href="${ENVIROMENT.URL_BACKEND}/api/auth/reset-password/${reset_token}">
+       <a href="${ENVIROMENT.URL_FRONTEND}/reset-password/${reset_token}">
           Restablecer contraseña
         </a>
         <p>Este enlace expira en 1 hora.</p>

@@ -2,11 +2,13 @@ import { ServerError } from '../error.js';
 import ReservaRepository from '../repositories/reserva.repository.js';
 import NotificationService from './NotificationService.js';
 
-
-
 class ReservaService {
     static async getAll() {
         return await ReservaRepository.getAll();
+    }
+
+    static async getByUserId(userId) {
+        return await ReservaRepository.getByUserId(userId);
     }
 
     static async getById(id) {
@@ -18,18 +20,15 @@ class ReservaService {
     static async create(data) {
         const { usuario_id, fecha, hora, motivo } = data;
 
-        // Validar campos obligatorios
         if (!usuario_id || !fecha || !hora) {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
         }
 
-        // Verificar disponibilidad del horario
         const reservaExistente = await ReservaRepository.findByFechaHora(fecha, hora);
         if (reservaExistente) {
             throw new ServerError(400, 'El horario ya está ocupado o bloqueado');
         }
 
-        // Crear reserva con estado inicial "Pendiente"
         return await ReservaRepository.create({
             usuario_id,
             fecha,
@@ -42,14 +41,12 @@ class ReservaService {
     static async update(id, data) {
         const reserva = await ReservaRepository.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
-
         return await ReservaRepository.updateById(id, data);
     }
 
     static async delete(id) {
         const reserva = await ReservaRepository.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
-
         return await ReservaRepository.deleteById(id);
     }
 
@@ -87,13 +84,11 @@ class ReservaService {
         if (reservaExistente) {
             const estadoAnterior = reservaExistente.estado;
 
-            // Actualizamos la reserva existente a estado Bloqueado
             await ReservaRepository.updateById(reservaExistente.id, {
                 estado: 'Bloqueado',
                 motivo: motivo || 'Bloqueo de horario'
             });
 
-            // Si estaba pendiente o aprobada, enviamos notificación al usuario
             if (estadoAnterior === 'Pendiente' || estadoAnterior === 'Aprobado') {
                 await NotificationService.enviarAdvertencia(
                     reservaExistente.usuario_id,
@@ -106,7 +101,6 @@ class ReservaService {
             return { ...reservaExistente, estado: 'Bloqueado', motivo };
         }
 
-        // Si no existe nada en ese horario, creamos un nuevo bloqueo
         return await ReservaRepository.create({
             usuario_id: null,
             fecha,
@@ -115,8 +109,7 @@ class ReservaService {
             estado: 'Bloqueado'
         });
     }
-
-
 }
 
 export default ReservaService;
+

@@ -1,10 +1,12 @@
 import ReservaService from "../services/ReservaService.js";
 
-
 class ReservaController {
     static async getAll(req, res) {
         try {
-            const reservas = await ReservaService.getAll();
+            // Tomamos el id del usuario desde el token
+            const userId = req.user.id;
+            const reservas = await ReservaService.getByUserId(userId);
+
             res.json({ ok: true, reservas });
         } catch (error) {
             res.status(error.status || 500).json({
@@ -29,7 +31,13 @@ class ReservaController {
 
     static async create(req, res) {
         try {
-            const result = await ReservaService.create(req.body);
+            // Forzamos que la reserva se cree con el usuario del token
+            const userId = req.user.id;
+            const result = await ReservaService.create({
+                ...req.body,
+                usuario_id: userId
+            });
+
             res.status(201).json({ ok: true, reserva: result });
         } catch (error) {
             res.status(error.status || 500).json({

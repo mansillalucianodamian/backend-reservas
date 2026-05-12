@@ -16,12 +16,16 @@ function authMiddleware(request, response, next) {
         }
 
         const user_session_data = jwt.verify(auth_token, ENVIROMENT.JWT_SECRET)
-
-        //HOT POINT: GUARDAMOS LOS DATOS DEL TOKEN DENTRO DE LA REQUEST
-        request.user = user_session_data
+        request.user = {
+            id: user_session_data.user_id,
+            nombre: user_session_data.nombre,
+            apellido: user_session_data.apellido,
+            email: user_session_data.email,
+            rol: user_session_data.rol
+        };
         next()
-    
-    console.log("✅ authMiddleware OK, user:", request.user);
+
+        console.log("✅ authMiddleware OK, user:", request.user);
     }
     catch (error) {
         if (error instanceof jwt.JsonWebTokenError) {

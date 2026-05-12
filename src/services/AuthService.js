@@ -12,7 +12,12 @@ class AuthService {
         // Verificar si el email ya existe
         const user = await UserRepository.getByEmail(email);
         if (user) {
-            throw new ServerError(400, 'Email ya en uso');
+            throw new ServerError(409, 'Email ya en uso');
+        }
+        // Verificar si el DNI ya existe
+        const userByDni = await UserRepository.getByDni(dni);
+        if (userByDni) {
+            throw new ServerError(409, 'El DNI ya está registrado');
         }
 
         // Encriptar contraseña
@@ -98,7 +103,7 @@ class AuthService {
 
         // 4. Armar payload del JWT con datos clave del usuario
         const payload = {
-            id: user_found.id,
+            user_id: user_found.id,
             nombre: user_found.nombre,
             apellido: user_found.apellido,
             email: user_found.email,

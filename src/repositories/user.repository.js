@@ -66,6 +66,16 @@ class UserRepository {
         }
     }
 
+    static async getByDni(dni) {
+        try {
+            const [rows] = await pool.query('SELECT * FROM usuarios WHERE dni = ?', [dni]);
+            return rows[0];
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo obtener el usuario con dni ' + dni, error);
+            throw error;
+        }
+    }
+
     static async deleteById(user_id) {
         try {
             const [result] = await pool.query('DELETE FROM usuarios WHERE id = ?', [user_id]);

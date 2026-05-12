@@ -14,7 +14,6 @@ class ReservaRepository {
         }
     }
 
-
     static async create(reserva) {
         const { usuario_id, fecha, hora, motivo, estado } = reserva;
         try {
@@ -47,10 +46,26 @@ class ReservaRepository {
         }
     }
 
+    static async getByUserId(userId) {
+        try {
+            const [rows] = await pool.query(
+                'SELECT * FROM reservas WHERE usuario_id = ?',
+                [userId]
+            );
+            return rows;
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo obtener las reservas del usuario ' + userId, error);
+            throw error;
+        }
+    }
+
     static async getById(reserva_id) {
         try {
-            const [rows] = await pool.query('SELECT * FROM reservas WHERE id = ?', [reserva_id]);
-            return rows[0];
+            const [rows] = await pool.query(
+                'SELECT * FROM reservas WHERE id = ?',
+                [reserva_id]
+            );
+            return rows[0] || null;
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo obtener la reserva con id ' + reserva_id, error);
             throw error;
@@ -62,7 +77,10 @@ class ReservaRepository {
             const keys = Object.keys(update_reserva);
             const values = Object.values(update_reserva);
             const setClause = keys.map(k => `${k} = ?`).join(', ');
-            await pool.query(`UPDATE reservas SET ${setClause} WHERE id = ?`, [...values, reserva_id]);
+            await pool.query(
+                `UPDATE reservas SET ${setClause} WHERE id = ?`,
+                [...values, reserva_id]
+            );
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo actualizar la reserva con id ' + reserva_id, error);
             throw error;
@@ -71,7 +89,10 @@ class ReservaRepository {
 
     static async deleteById(reserva_id) {
         try {
-            const [result] = await pool.query('DELETE FROM reservas WHERE id = ?', [reserva_id]);
+            const [result] = await pool.query(
+                'DELETE FROM reservas WHERE id = ?',
+                [reserva_id]
+            );
             return result.affectedRows > 0;
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo eliminar la reserva con id ' + reserva_id, error);
