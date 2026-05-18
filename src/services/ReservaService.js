@@ -63,7 +63,7 @@ class ReservaService {
         return await ReservaRepository.updateById(id, { estado: 'Aprobado' });
     }
 
-    static async cancelar(id) {
+    static async cancelar(id, user) {
         const reserva = await ReservaRepository.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
 
@@ -71,8 +71,21 @@ class ReservaService {
             throw new ServerError(400, 'La reserva ya está cancelada');
         }
 
-        return await ReservaRepository.updateById(id, { estado: 'Cancelado' });
+        // Si es super admin → estado Cancelado
+        if (user.rol === 'super_admin') {
+            return await ReservaRepository.updateById(id, { estado: 'Cancelado' });
+        }
+
+        // Si es usuario común → eliminar la reserva para liberar el horario
+        if (user.rol === 'usuario' || user.rol === 'recepcionista') {
+            await ReservaRepository.deleteById(id);
+            return { ok: true, message: 'Reserva eliminada, horario disponible' };
+        }
+
+        throw new ServerError(403, 'No autorizado para cancelar');
     }
+
+
 
     static async bloquear(data) {
         const { fecha, hora, motivo } = data;

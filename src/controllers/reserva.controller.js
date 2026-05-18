@@ -93,18 +93,15 @@ class ReservaController {
         }
     }
 
-    static async cancelar(req, res) {
+    static async cancelar(req, res, next) {
         try {
-            const { id } = req.params;
-            const result = await ReservaService.cancelar(id);
-            res.json({ ok: true, reserva: result });
-        } catch (error) {
-            res.status(error.status || 500).json({
-                ok: false,
-                message: error.message || "Error al cancelar reserva"
-            });
+            const result = await ReservaService.cancelar(req.params.id, req.user);
+            res.json({ ok: true, ...result });
+        } catch (err) {
+            next(err);
         }
     }
+
 
     static async bloquear(req, res) {
         try {
