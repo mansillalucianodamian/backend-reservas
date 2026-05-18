@@ -8,7 +8,7 @@ const reservasRouter = Router();
 // CRUD básico
 reservasRouter.get(
     "/",
-    authMiddleware,                // 👈 protege la ruta
+    authMiddleware,
     roleMiddleware('usuario', 'recepcionista', 'super_admin'),
     ReservaController.getAll
 );
@@ -56,6 +56,12 @@ reservasRouter.post(
     authMiddleware,
     roleMiddleware('super_admin'),
     ReservaController.bloquear
+);
+
+// 🔹 NUEVO: Horarios disponibles
+reservasRouter.get(
+    "/disponibles/:fecha",
+    ReservaController.getDisponibles
 );
 
 export default reservasRouter;

@@ -3,15 +3,13 @@ import ReservaService from "../services/ReservaService.js";
 class ReservaController {
     static async getAll(req, res) {
         try {
-            // Tomamos el id del usuario desde el token
             const userId = req.user.id;
             const reservas = await ReservaService.getByUserId(userId);
-
             res.json({ ok: true, reservas });
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al obtener reservas'
+                message: error.message || "Error al obtener reservas"
             });
         }
     }
@@ -24,17 +22,26 @@ class ReservaController {
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al obtener reserva'
+                message: error.message || "Error al obtener reserva"
             });
         }
     }
 
     static async create(req, res) {
         try {
-            // Forzamos que la reserva se cree con el usuario del token
             const userId = req.user.id;
+            const { fecha, hora } = req.body;
+
+            if (!fecha || !hora) {
+                return res.status(400).json({
+                    ok: false,
+                    message: "Debe enviar fecha y hora"
+                });
+            }
+
             const result = await ReservaService.create({
-                ...req.body,
+                fecha,
+                hora,
                 usuario_id: userId
             });
 
@@ -42,7 +49,7 @@ class ReservaController {
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al crear reserva'
+                message: error.message || "Error al crear reserva"
             });
         }
     }
@@ -55,7 +62,7 @@ class ReservaController {
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al actualizar reserva'
+                message: error.message || "Error al actualizar reserva"
             });
         }
     }
@@ -64,11 +71,11 @@ class ReservaController {
         try {
             const { id } = req.params;
             await ReservaService.delete(id);
-            res.json({ ok: true, message: 'Reserva eliminada con éxito' });
+            res.json({ ok: true, message: "Reserva eliminada con éxito" });
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al eliminar reserva'
+                message: error.message || "Error al eliminar reserva"
             });
         }
     }
@@ -81,7 +88,7 @@ class ReservaController {
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al aprobar reserva'
+                message: error.message || "Error al aprobar reserva"
             });
         }
     }
@@ -94,7 +101,7 @@ class ReservaController {
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al cancelar reserva'
+                message: error.message || "Error al cancelar reserva"
             });
         }
     }
@@ -106,10 +113,32 @@ class ReservaController {
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
-                message: error.message || 'Error al bloquear horario'
+                message: error.message || "Error al bloquear horario"
+            });
+        }
+    }
+
+    static async getDisponibles(req, res) {
+        try {
+            const { fecha } = req.params;
+
+            if (!fecha) {
+                return res.status(400).json({
+                    ok: false,
+                    message: "Debe enviar una fecha"
+                });
+            }
+
+            // Llamamos al servicio para obtener horarios libres
+            const horarios = await ReservaService.getDisponibles(fecha);
+
+            res.json({ ok: true, horarios });
+        } catch (error) {
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || "Error al obtener horarios disponibles"
             });
         }
     }
 }
-
 export default ReservaController;

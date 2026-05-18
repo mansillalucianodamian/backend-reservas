@@ -18,7 +18,7 @@ class ReservaService {
     }
 
     static async create(data) {
-        const { usuario_id, fecha, hora, motivo } = data;
+        const { usuario_id, fecha, hora } = data;
 
         if (!usuario_id || !fecha || !hora) {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
@@ -33,7 +33,6 @@ class ReservaService {
             usuario_id,
             fecha,
             hora,
-            motivo: motivo || null,
             estado: 'Pendiente'
         });
     }
@@ -41,7 +40,10 @@ class ReservaService {
     static async update(id, data) {
         const reserva = await ReservaRepository.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
-        return await ReservaRepository.updateById(id, data);
+
+        // Solo permitimos actualizar fecha, hora o estado
+        const { fecha, hora, estado } = data;
+        return await ReservaRepository.updateById(id, { fecha, hora, estado });
     }
 
     static async delete(id) {
@@ -98,7 +100,7 @@ class ReservaService {
                 );
             }
 
-            return { ...reservaExistente, estado: 'Bloqueado', motivo };
+            return { ...reservaExistente, estado: 'Bloqueado', motivo: motivo || 'Bloqueo de horario' };
         }
 
         return await ReservaRepository.create({
@@ -109,7 +111,25 @@ class ReservaService {
             estado: 'Bloqueado'
         });
     }
+
+    static async getDisponibles(fecha) {
+        const todosHorarios = [
+            "08:30", "10:00", "11:30", "13:00",
+            "14:30", "16:00", "17:30", "19:00", "20:30"
+        ];
+
+        const reservas = await ReservaRepository.getByFecha(fecha);
+
+        // Normalizamos estado y hora
+        const ocupados = reservas
+            .filter(r => {
+                const estado = (r.estado || "").toLowerCase();
+                return estado === "pendiente" || estado === "aprobado" || estado === "bloqueado";
+            })
+            .map(r => r.hora.trim().substring(0, 5)); // "13:00:00" → "13:00"
+
+        return todosHorarios.filter(h => !ocupados.includes(h));
+    }
 }
 
 export default ReservaService;
-

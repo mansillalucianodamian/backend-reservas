@@ -15,11 +15,12 @@ class ReservaRepository {
     }
 
     static async create(reserva) {
-        const { usuario_id, fecha, hora, motivo, estado } = reserva;
+        const { usuario_id, fecha, hora, estado, motivo } = reserva;
         try {
+            // Si viene motivo (bloqueo), lo insertamos; si no, lo dejamos en NULL
             const [result] = await pool.query(
-                'INSERT INTO reservas (usuario_id, fecha, hora, motivo, estado) VALUES (?, ?, ?, ?, ?)',
-                [usuario_id, fecha, hora, motivo, estado]
+                'INSERT INTO reservas (usuario_id, fecha, hora, estado, motivo) VALUES (?, ?, ?, ?, ?)',
+                [usuario_id, fecha, hora, estado, motivo || null]
             );
 
             return {
@@ -27,8 +28,8 @@ class ReservaRepository {
                 usuario_id,
                 fecha,
                 hora,
-                motivo,
-                estado
+                estado,
+                motivo: motivo || null
             };
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo crear la reserva', error);
@@ -96,6 +97,18 @@ class ReservaRepository {
             return result.affectedRows > 0;
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo eliminar la reserva con id ' + reserva_id, error);
+            throw error;
+        }
+    }
+    static async getByFecha(fecha) {
+        try {
+            const [rows] = await pool.query(
+                "SELECT id, usuario_id, fecha, hora, estado FROM reservas WHERE fecha = ?",
+                [fecha]
+            );
+            return rows;
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo obtener reservas por fecha', error);
             throw error;
         }
     }
