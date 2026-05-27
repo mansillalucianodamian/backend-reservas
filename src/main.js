@@ -9,6 +9,7 @@ import { pool } from './config/db.js';
 import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
+import { apagarLuz, encenderLuz } from './services/ShellyService.js';
 
 
 const app = express();
@@ -38,4 +39,24 @@ app.get('/ping', async (req, res) => {
 // Servidor
 app.listen(ENVIROMENT.PORT || 8080, () => {
   console.log(`Servidor corriendo en el puerto ${ENVIROMENT.PORT || 8080}`);
+});
+
+// Ruta de prueba para encender
+app.get("/test-shelly/on", async (req, res) => {
+  try {
+    await encenderLuz();
+    res.json({ ok: true, message: "Shelly encendido" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// Ruta de prueba para apagar
+app.get("/test-shelly/off", async (req, res) => {
+  try {
+    await apagarLuz();
+    res.json({ ok: true, message: "Shelly apagado" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
 });

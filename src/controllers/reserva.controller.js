@@ -1,4 +1,7 @@
 import ReservaService from "../services/ReservaService.js";
+import { programarReserva } from "../services/SchedulerService.js";
+import { apagarLuz } from "../services/ShellyService.js";
+
 
 class ReservaController {
     static async getAll(req, res) {
@@ -83,8 +86,12 @@ class ReservaController {
     static async aprobar(req, res) {
         try {
             const { id } = req.params;
-            const result = await ReservaService.aprobar(id);
-            res.json({ ok: true, reserva: result });
+            const reserva = await ReservaService.aprobar(id);
+
+            // 🔹 Programar encendido 5 min antes y apagado 90 min después
+            programarReserva(reserva);
+
+            res.json({ ok: true, reserva });
         } catch (error) {
             res.status(error.status || 500).json({
                 ok: false,
@@ -96,7 +103,12 @@ class ReservaController {
     static async cancelar(req, res, next) {
         try {
             const result = await ReservaService.cancelar(req.params.id, req.user);
+
+            // Responder rápido al cliente
             res.json({ ok: true, ...result });
+
+            // Intentar apagar Shelly en segundo plano
+            apagarLuz().catch(err => console.error("Shelly no disponible:", err.message));
         } catch (err) {
             next(err);
         }
@@ -126,9 +138,7 @@ class ReservaController {
                 });
             }
 
-            // Llamamos al servicio para obtener horarios libres
             const horarios = await ReservaService.getDisponibles(fecha);
-
             res.json({ ok: true, horarios });
         } catch (error) {
             res.status(error.status || 500).json({
@@ -138,4 +148,5 @@ class ReservaController {
         }
     }
 }
+
 export default ReservaController;
