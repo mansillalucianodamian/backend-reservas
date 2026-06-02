@@ -51,34 +51,35 @@ class ReservaService {
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
         return await ReservaRepository.deleteById(id);
     }
-static async aprobar(id) {
-    // Traer la reserva original
-    const reserva = await ReservaRepository.getById(id);
-    console.log("Reserva original desde BD:", reserva);
+    static async aprobar(id) {
+        // Traer la reserva original
+        const reserva = await ReservaRepository.getById(id);
+        console.log("Reserva original desde BD:", reserva);
 
-    if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
+        if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
 
-    if (reserva.estado !== 'Pendiente') {
-        throw new ServerError(400, 'Solo se pueden aprobar reservas pendientes');
+        if (reserva.estado !== 'Pendiente') {
+            throw new ServerError(400, 'Solo se pueden aprobar reservas pendientes');
+        }
+
+        // Actualizar estado
+        await ReservaRepository.updateById(id, { estado: 'Aprobado' });
+
+        // Volver a traer la reserva completa ya aprobada
+        const reservaActualizada = await ReservaRepository.getById(id);
+        console.log("Reserva después de aprobar:", reservaActualizada);
+
+        // Normalizar hora (ej: "10:00:00" → "10:00")
+        if (reservaActualizada.hora) {
+            reservaActualizada.hora = reservaActualizada.hora.slice(0, 5);
+            console.log("Hora normalizada:", reservaActualizada.hora);
+        } else {
+            console.error("La reserva no tiene hora definida!");
+        }
+
+
+        return reservaActualizada;
     }
-
-    // Actualizar estado
-    await ReservaRepository.updateById(id, { estado: 'Aprobado' });
-
-    // Volver a traer la reserva completa ya aprobada
-    const reservaActualizada = await ReservaRepository.getById(id);
-    console.log("Reserva después de aprobar:", reservaActualizada);
-
-    // Normalizar hora (ej: "10:00:00" → "10:00")
-    if (reservaActualizada.hora) {
-        reservaActualizada.hora = reservaActualizada.hora.slice(0, 5);
-        console.log("Hora normalizada:", reservaActualizada.hora);
-    } else {
-        console.error("La reserva no tiene hora definida!");
-    }
-
-    return reservaActualizada;
-}
 
 
     static async cancelar(id, user) {
@@ -160,6 +161,9 @@ static async aprobar(id) {
             .map(r => r.hora.trim().substring(0, 5)); // "13:00:00" → "13:00"
 
         return todosHorarios.filter(h => !ocupados.includes(h));
+    }
+    static async getPendientes() {
+        return await ReservaRepository.getPendientes();
     }
 }
 

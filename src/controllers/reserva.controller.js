@@ -6,8 +6,19 @@ import { apagarLuz } from "../services/ShellyService.js";
 class ReservaController {
     static async getAll(req, res) {
         try {
-            const userId = req.user.id;
-            const reservas = await ReservaService.getByUserId(userId);
+            let reservas;
+
+            if (req.user.rol === 'usuario') {
+                // 🔹 Usuario común: solo sus reservas
+                reservas = await ReservaService.getByUserId(req.user.id);
+            } else if (req.user.rol === 'recepcionista' || req.user.rol === 'super_admin') {
+                // 🔹 Recepcionista y superadmin: todas las reservas
+                reservas = await ReservaService.getAll();
+            } else {
+                reservas = [];
+            }
+
+            console.log("👉 Rol:", req.user.rol, "Reservas desde DB:", reservas);
             res.json({ ok: true, reservas });
         } catch (error) {
             res.status(error.status || 500).json({
@@ -147,6 +158,19 @@ class ReservaController {
             });
         }
     }
+    static async getPendientes(req, res) {
+        try {
+            const reservas = await ReservaService.getPendientes();
+            console.log("📥 Reservas encontradas:", reservas);
+            res.json({ ok: true, reservas });
+        } catch (error) {
+            console.error('[SERVER ERROR]:', error);
+            res.status(500).json({ ok: false, message: 'Error al obtener reservas pendientes' });
+        }
+    }
+
+
+
 }
 
 export default ReservaController;

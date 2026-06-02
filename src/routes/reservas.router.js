@@ -12,6 +12,11 @@ reservasRouter.get(
     roleMiddleware('usuario', 'recepcionista', 'super_admin'),
     ReservaController.getAll
 );
+reservasRouter.get("/pendientes", 
+    authMiddleware,
+    roleMiddleware('recepcionista', 'super_admin'),
+    ReservaController.getPendientes
+);
 
 reservasRouter.get("/:id", authMiddleware, ReservaController.getById);
 
@@ -63,6 +68,7 @@ reservasRouter.get(
     "/disponibles/:fecha",
     ReservaController.getDisponibles
 );
+
 
 export default reservasRouter;
 

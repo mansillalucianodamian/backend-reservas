@@ -36,16 +36,26 @@ class ReservaRepository {
             throw error;
         }
     }
-
     static async getAll() {
         try {
-            const [rows] = await pool.query('SELECT * FROM reservas');
+            const [rows] = await pool.query(`
+      SELECT 
+        r.id,
+        r.fecha,
+        r.hora,
+        r.estado,
+        r.usuario_id,
+        CONCAT(u.apellido, ', ', u.nombre) AS usuario
+      FROM reservas r
+      JOIN usuarios u ON r.usuario_id = u.id
+    `);
             return rows;
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo obtener la lista de reservas', error);
             throw error;
         }
     }
+
 
     static async getByUserId(userId) {
         try {
@@ -109,6 +119,26 @@ class ReservaRepository {
             return rows;
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo obtener reservas por fecha', error);
+            throw error;
+        }
+    }
+    static async getPendientes() {
+        try {
+            const [rows] = await pool.query(`
+      SELECT 
+        r.id,
+        r.fecha,
+        r.hora,
+        r.estado,
+        r.usuario_id,
+        CONCAT(u.apellido, ', ', u.nombre) AS usuario
+      FROM reservas r
+      LEFT JOIN usuarios u ON r.usuario_id = u.id
+      WHERE r.estado = 'Pendiente'
+    `);
+            return rows; // 👈 siempre array
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo obtener reservas pendientes', error);
             throw error;
         }
     }
