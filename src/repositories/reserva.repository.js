@@ -7,12 +7,26 @@ class ReservaRepository {
                 'SELECT * FROM reservas WHERE fecha = ? AND hora = ?',
                 [fecha, hora]
             );
-            return rows[0] || null;
+
+            // Si no hay reservas, devolvemos null
+            if (!rows || rows.length === 0) {
+                return null;
+            }
+
+            // Normalizamos el resultado
+            return rows.map(r => ({
+                id: r.id,
+                usuario_id: r.usuario_id,
+                fecha: r.fecha,
+                hora: r.hora.trim().substring(0, 5), // "08:00:00" → "08:00"
+                estado: (r.estado || '').toLowerCase()
+            }));
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo verificar la reserva en fecha/hora', error);
             throw error;
         }
     }
+
 
     static async create(reserva) {
         const { usuario_id, fecha, hora, estado, motivo } = reserva;
@@ -56,6 +70,30 @@ class ReservaRepository {
         }
     }
 
+    static async findByUsuarioYFecha(usuario_id, fecha) {
+        try {
+            const [rows] = await pool.query(
+                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha = ? AND estado != "Cancelado"',
+                [usuario_id, fecha]
+            );
+            return rows; // devuelve todas las reservas de ese usuario en esa fecha
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo verificar reservas por usuario/fecha', error);
+            throw error;
+        }
+    }
+    static async findByUsuarioYSemana(usuario_id, inicioSemana, finSemana) {
+        try {
+            const [rows] = await pool.query(
+                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha BETWEEN ? AND ? AND estado != "Cancelado"',
+                [usuario_id, inicioSemana.toISOString().split('T')[0], finSemana.toISOString().split('T')[0]]
+            );
+            return rows;
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo verificar reservas por semana', error);
+            throw error;
+        }
+    }
 
     static async getByUserId(userId) {
         try {

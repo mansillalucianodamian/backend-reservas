@@ -24,18 +24,47 @@ class ReservaService {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
         }
 
+        // 1. Calcular rango de la semana de la fecha seleccionada
+        const fechaObj = new Date(fecha);
+        const inicioSemana = new Date(fechaObj);
+        inicioSemana.setDate(fechaObj.getDate() - fechaObj.getDay()); // domingo/lunes según tu lógica
+        const finSemana = new Date(inicioSemana);
+        finSemana.setDate(inicioSemana.getDate() + 6);
+
+        // 2. Buscar reservas del usuario en ese rango
+        const reservasSemana = await ReservaRepository.findByUsuarioYSemana(usuario_id, inicioSemana, finSemana);
+
+        if (reservasSemana.length >= 2) {
+            throw new ServerError(400, 'Ya tienes el máximo de 2 reservas para esta semana');
+        }
+
+        // 3. Validar que el horario no esté ocupado
         const reservaExistente = await ReservaRepository.findByFechaHora(fecha, hora);
         if (reservaExistente) {
             throw new ServerError(400, 'El horario ya está ocupado o bloqueado');
         }
 
-        return await ReservaRepository.create({
+        // 4. Crear la reserva
+        const nuevaReserva = await ReservaRepository.create({
             usuario_id,
             fecha,
             hora,
             estado: 'Pendiente'
         });
+
+        // 5. Enviar notificación de confirmación
+        await NotificationService.enviarConfirmacionReserva(
+            usuario_id,
+            { fecha, hora },
+            1,          // cantidadDias (ajustá según tu lógica)
+            2000,       // montoTotal (ajustá según tu lógica)
+            3           // plazo en días para pagar
+        );
+
+        return nuevaReserva;
     }
+
+
 
     static async update(id, data) {
         const reserva = await ReservaRepository.getById(id);
@@ -145,23 +174,27 @@ class ReservaService {
     }
 
     static async getDisponibles(fecha) {
-        const todosHorarios = [
-            "08:30", "10:00", "11:30", "13:00",
-            "14:30", "16:00", "17:30", "19:00", "20:30"
-        ];
+        const todosHorarios = [];
+        for (let h = 7; h <= 24; h++) {
+            const hora = h === 24 ? '00:00' : `${h.toString().padStart(2, '0')}:00`;
+            todosHorarios.push(hora);
+        }
 
         const reservas = await ReservaRepository.getByFecha(fecha);
 
-        // Normalizamos estado y hora
         const ocupados = reservas
-            .filter(r => {
-                const estado = (r.estado || "").toLowerCase();
-                return estado === "pendiente" || estado === "aprobado" || estado === "bloqueado";
-            })
-            .map(r => r.hora.trim().substring(0, 5)); // "13:00:00" → "13:00"
+            .filter(r => ["pendiente", "aprobado", "bloqueado"].includes((r.estado || "").toLowerCase()))
+            .map(r => r.hora.trim().substring(0, 5));
 
-        return todosHorarios.filter(h => !ocupados.includes(h));
+        // 👇 devolvemos todos los horarios con estado
+        return todosHorarios.map(h => ({
+            hora: h,
+            disponible: !ocupados.includes(h)
+        }));
     }
+
+
+
     static async getPendientes() {
         return await ReservaRepository.getPendientes();
     }
