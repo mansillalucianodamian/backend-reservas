@@ -37,7 +37,7 @@ app.get('/ping', async (req, res) => {
 });
 
 // Servidor
-app.listen(ENVIROMENT.PORT || 8080, () => {
+app.listen(ENVIROMENT.PORT || 8080, '0.0.0.0', () => {
   console.log(`Servidor corriendo en el puerto ${ENVIROMENT.PORT || 8080}`);
 });
 
