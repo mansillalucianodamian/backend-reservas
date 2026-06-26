@@ -1,7 +1,13 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Forzar la carga del .env correcto
-dotenv.config({ path: './.env' });
+// Detectar ruta del archivo actual
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Cargar siempre el .env desde la raíz del proyecto
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const ENVIROMENT = {
   GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,
