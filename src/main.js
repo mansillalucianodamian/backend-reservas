@@ -1,5 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config({ path: '/home/administrador/backend-reservas/.env' });
 import express from 'express';
 import cors from 'cors';
 import ENVIROMENT from './config/enviroment.config.js';

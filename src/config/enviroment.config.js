@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 
 // Forzar la carga del .env correcto
-dotenv.config({ path: '/home/administrador/backend-reservas/.env' });
+dotenv.config({ path: './.env' });
 
 const ENVIROMENT = {
   GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,

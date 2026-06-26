@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import ENVIROMENT from './enviroment.config.js';
 
+
 console.log("DB_HOST:", ENVIROMENT.DB_HOST);
 console.log("DB_PORT:", ENVIROMENT.DB_PORT);
 console.log("DB_USER:", ENVIROMENT.DB_USER);
