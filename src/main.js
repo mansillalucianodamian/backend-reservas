@@ -10,6 +10,9 @@ import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
 import { apagarLuz, encenderLuz } from './services/ShellyService.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 
 const app = express();
