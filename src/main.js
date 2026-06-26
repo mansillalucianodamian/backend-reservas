@@ -1,17 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import ENVIROMENT from './config/enviroment.config.js';
-
-// Conexión MySQL
 import { pool } from './config/db.js';
 
-// Router de autenticación
+// Routers
 import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
 import { apagarLuz, encenderLuz } from './services/ShellyService.js';
-
-
 
 const app = express();
 
@@ -22,9 +18,7 @@ app.use(express.json());
 // Rutas principales
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
-
-// Registrar el router
-app.use("/api/reservas", reservasRouter);
+app.use('/api/reservas', reservasRouter);
 
 // Endpoint de prueba para verificar conexión MySQL
 app.get('/ping', async (req, res) => {
@@ -42,7 +36,7 @@ app.listen(ENVIROMENT.PORT || 8080, '0.0.0.0', () => {
   console.log(`Servidor corriendo en el puerto ${ENVIROMENT.PORT || 8080}`);
 });
 
-// Ruta de prueba para encender
+// Rutas de prueba para Shelly
 app.get("/test-shelly/on", async (req, res) => {
   try {
     await encenderLuz();
@@ -52,7 +46,6 @@ app.get("/test-shelly/on", async (req, res) => {
   }
 });
 
-// Ruta de prueba para apagar
 app.get("/test-shelly/off", async (req, res) => {
   try {
     await apagarLuz();
