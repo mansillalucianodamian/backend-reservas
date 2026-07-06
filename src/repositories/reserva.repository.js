@@ -75,7 +75,7 @@ class ReservaRepository {
     static async findByUsuarioYFecha(usuario_id, fecha) {
         try {
             const [rows] = await pool.query(
-                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha = ? AND estado != "Cancelado"',
+                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha = ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada", "Bloqueado", "Bloqueada")',
                 [usuario_id, fecha]
             );
             return rows; // devuelve todas las reservas de ese usuario en esa fecha
@@ -87,7 +87,7 @@ class ReservaRepository {
     static async findByUsuarioYSemana(usuario_id, inicioSemana, finSemana) {
         try {
             const [rows] = await pool.query(
-                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha BETWEEN ? AND ? AND estado != "Cancelado"',
+                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha BETWEEN ? AND ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada", "Bloqueado", "Bloqueada")',
                 [usuario_id, inicioSemana.toISOString().split('T')[0], finSemana.toISOString().split('T')[0]]
             );
             return rows;
