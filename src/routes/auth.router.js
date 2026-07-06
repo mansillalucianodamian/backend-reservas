@@ -5,12 +5,13 @@ import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 
 
 const authRouter = Router()
-
+//probando cambios 
 
 authRouter.post(
     '/register',
     validateRequest(registerSchema),
     AuthController.register
+
 )
 
 authRouter.get(
