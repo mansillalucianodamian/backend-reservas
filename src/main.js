@@ -8,6 +8,7 @@ import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
 import { apagarLuz, encenderLuz } from './services/ShellyService.js';
+import { iniciarSincronizadorLuces } from './services/SchedulerService.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.get('/ping', async (req, res) => {
 // Servidor
 app.listen(ENVIROMENT.PORT || 8080, '0.0.0.0', () => {
   console.log(`Servidor corriendo en el puerto ${ENVIROMENT.PORT || 8080}`);
+  iniciarSincronizadorLuces();
 });
 
 // Rutas de prueba para Shelly

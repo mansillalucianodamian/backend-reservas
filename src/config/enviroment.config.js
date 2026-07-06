@@ -24,6 +24,9 @@ const ENVIROMENT = {
   GMAIL_USER: process.env.GMAIL_USER,
   GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,
   JWT_SECRET: process.env.JWT_SECRET,
+  SHELLY_CLOUD_URL: process.env.SHELLY_CLOUD_URL,
+  SHELLY_DEVICE_ID: process.env.SHELLY_DEVICE_ID,
+  SHELLY_AUTH_KEY: process.env.SHELLY_AUTH_KEY,
 };
 
 export default ENVIROMENT;
