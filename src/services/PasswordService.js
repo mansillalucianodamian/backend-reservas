@@ -4,6 +4,7 @@ import mailTransporter from '../config/mailTransporter.config.js';
 import ENVIROMENT from '../config/enviroment.config.js';
 import UserRepository from '../repositories/user.repository.js';
 import { ServerError } from '../error.js';
+import { getPasswordResetEmailHtml } from '../utils/emailTemplates.js';
 
 class PasswordService {
     // 👉 Paso 1: Solicitar recuperación
@@ -27,18 +28,12 @@ class PasswordService {
         });
 
         // Enviar correo con el link
+        const link = `${ENVIROMENT.URL_FRONTEND}/reset-password/${reset_token}`;
         await mailTransporter.sendMail({
             from: ENVIROMENT.GMAIL_USER,
             to: email,
-            subject: 'Restablece tu contraseña',
-            html: `
-        <h1>Restablece tu contraseña</h1>
-        <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
-       <a href="${ENVIROMENT.URL_FRONTEND}/reset-password/${reset_token}">
-          Restablecer contraseña
-        </a>
-        <p>Este enlace expira en 1 hora.</p>
-      `
+            subject: 'Restablece tu contraseña - Municipalidad',
+            html: getPasswordResetEmailHtml(user.nombre, link)
         });
 
         return { ok: true, message: 'Correo de recuperación enviado' };

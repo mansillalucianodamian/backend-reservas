@@ -4,6 +4,7 @@ import { ServerError } from "../error.js";
 import UserRepository from "../repositories/user.repository.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { getVerificationEmailHtml } from "../utils/emailTemplates.js";
 
 class AuthService {
     static async register(userData) {
@@ -32,14 +33,12 @@ class AuthService {
             ENVIROMENT.JWT_SECRET
         );
 
+        const link = `${ENVIROMENT.URL_BACKEND}/api/auth/verify-email/${verification_token}`;
         await mailTransporter.sendMail({
             from: ENVIROMENT.GMAIL_USER,
             to: email,
-            subject: 'Verifica tu cuenta de mail',
-            html: `
-              <h1>Verifica tu cuenta de mail</h1>
-              <a href="${ENVIROMENT.URL_BACKEND}/api/auth/verify-email/${verification_token}">Verificar</a>
-            `
+            subject: 'Verifica tu cuenta de correo electrónico',
+            html: getVerificationEmailHtml(nombre, link)
         });
 
         return user_created;

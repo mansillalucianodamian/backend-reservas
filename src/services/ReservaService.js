@@ -106,6 +106,11 @@ class ReservaService {
             console.error("La reserva no tiene hora definida!");
         }
 
+        // Enviar notificación de confirmación de pago
+        await NotificationService.enviarConfirmacionPago(
+            reservaActualizada.usuario_id,
+            reservaActualizada
+        );
 
         return reservaActualizada;
     }
