@@ -4,7 +4,7 @@ class ReservaRepository {
     static async findByFechaHora(fecha, hora) {
         try {
             const [rows] = await pool.query(
-                'SELECT * FROM reservas WHERE fecha = ? AND hora = ?',
+                'SELECT * FROM reservas WHERE fecha = ? AND hora = ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada")',
                 [fecha, hora]
             );
 
@@ -13,14 +13,15 @@ class ReservaRepository {
                 return null;
             }
 
-            // Normalizamos el resultado
-            return rows.map(r => ({
+            // Normalizamos el resultado y devolvemos la primera coincidencia
+            const mapped = rows.map(r => ({
                 id: r.id,
                 usuario_id: r.usuario_id,
                 fecha: r.fecha,
                 hora: r.hora.trim().substring(0, 5), // "08:00:00" → "08:00"
-                estado: (r.estado || '').toLowerCase()
+                estado: r.estado
             }));
+            return mapped[0];
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo verificar la reserva en fecha/hora', error);
             throw error;
@@ -59,9 +60,10 @@ class ReservaRepository {
         r.hora,
         r.estado,
         r.usuario_id,
+        r.motivo,
         CONCAT(u.apellido, ', ', u.nombre) AS usuario
       FROM reservas r
-      JOIN usuarios u ON r.usuario_id = u.id
+      LEFT JOIN usuarios u ON r.usuario_id = u.id
     `);
             return rows;
         } catch (error) {
