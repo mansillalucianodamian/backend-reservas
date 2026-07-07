@@ -1,9 +1,7 @@
-
 import mailTransporter from '../config/mailTransporter.config.js';
 import UserRepository from '../repositories/user.repository.js';
 import ENVIROMENT from '../config/enviroment.config.js';
-import { getBookingConfirmationEmailHtml, getReservationCancellationEmailHtml, getBookingApprovedEmailHtml } from '../utils/emailTemplates.js';
-
+import { getBookingConfirmationEmailHtml, getReservationCancellationEmailHtml, getBookingApprovedEmailHtml, formatFecha } from '../utils/emailTemplates.js';
 
 class NotificationService {
     static async enviarAdvertencia(usuario_id, motivo, fecha, hora) {
@@ -19,7 +17,7 @@ class NotificationService {
             const mailOptions = {
                 from: `"Municipalidad de Aldea San Antonio" <${ENVIROMENT.GMAIL_USER}>`,
                 to: usuario.email,
-                subject: `Aviso: Tu turno del día ${fecha} fue cancelado`,
+                subject: `Aviso: Tu turno del día ${formatFecha(fecha)} fue cancelado`,
                 html: getReservationCancellationEmailHtml(usuario.nombre, { fecha, hora, motivo })
             };
 
@@ -42,7 +40,7 @@ class NotificationService {
             const mailOptions = {
                 from: `"Municipalidad de Aldea San Antonio" <${ENVIROMENT.GMAIL_USER}>`,
                 to: usuario.email,
-                subject: `Confirmación de reserva - Turno del ${reserva.fecha}`,
+                subject: `Confirmación de reserva - Turno del ${formatFecha(reserva.fecha)}`,
                 html: getBookingConfirmationEmailHtml(usuario.nombre, {
                     fecha: reserva.fecha,
                     hora: reserva.hora,
@@ -70,7 +68,7 @@ class NotificationService {
             const mailOptions = {
                 from: `"Municipalidad de Aldea San Antonio" <${ENVIROMENT.GMAIL_USER}>`,
                 to: usuario.email,
-                subject: `¡Pago Recibido! Turno del ${reserva.fecha} confirmado`,
+                subject: `¡Pago Recibido! Turno del ${formatFecha(reserva.fecha)} confirmado`,
                 html: getBookingApprovedEmailHtml(usuario.nombre, {
                     fecha: reserva.fecha,
                     hora: reserva.hora

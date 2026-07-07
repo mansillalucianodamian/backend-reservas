@@ -1,22 +1,30 @@
 /**
  * HTML Email Templates with modern and responsive inline styling for the Municipality portal.
  */
-const formatFecha = (fechaInput) => {
+export const formatFecha = (fechaInput) => {
   if (!fechaInput) return '';
-  const dateObj = new Date(fechaInput);
   
-  if (isNaN(dateObj.getTime())) return fechaInput;
+  let year, month, day;
   
-  let year = dateObj.getFullYear();
-  let month = dateObj.getMonth();
-  let day = dateObj.getDate();
-  
-  if (typeof fechaInput === 'string' && fechaInput.includes('-') && fechaInput.length <= 10) {
-    const parts = fechaInput.split('-');
-    if (parts.length === 3) {
-      year = parseInt(parts[0], 10);
-      month = parseInt(parts[1], 10) - 1;
-      day = parseInt(parts[2], 10);
+  if (fechaInput instanceof Date) {
+    year = fechaInput.getUTCFullYear();
+    month = fechaInput.getUTCMonth();
+    day = fechaInput.getUTCDate();
+  } else {
+    const dateObj = new Date(fechaInput);
+    if (isNaN(dateObj.getTime())) return fechaInput;
+    
+    year = dateObj.getFullYear();
+    month = dateObj.getMonth();
+    day = dateObj.getDate();
+    
+    if (typeof fechaInput === 'string' && fechaInput.includes('-') && fechaInput.length <= 10) {
+      const parts = fechaInput.split('-');
+      if (parts.length === 3) {
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10) - 1;
+        day = parseInt(parts[2], 10);
+      }
     }
   }
   
