@@ -47,14 +47,24 @@ class AuthController {
 
     static async verifyEmail(req, res) {
         try {
-            const { token } = req.params; // lo tomamos de params
+            const { token } = req.params;
             await AuthService.verifyEmail(token);
-            res.json({ ok: true, message: 'Email verificado con éxito' });
+            
+            let redirectUrl = `${ENVIROMENT.URL_FRONTEND}/login?verified=true`;
+            if (req.get('host') && !req.get('host').includes('localhost')) {
+                const protocol = req.headers['x-forwarded-proto'] || 'http';
+                redirectUrl = `${protocol}://${req.get('host')}/login?verified=true`;
+            }
+            return res.redirect(redirectUrl);
         } catch (error) {
-            res.status(error.status || 500).json({
-                ok: false,
-                message: error.message || 'Error al verificar email'
-            });
+            console.error('ERROR AL VERIFICAR EMAIL', error);
+            
+            let redirectUrl = `${ENVIROMENT.URL_FRONTEND}/login?verified=false&error=${encodeURIComponent(error.message || 'Error al verificar email')}`;
+            if (req.get('host') && !req.get('host').includes('localhost')) {
+                const protocol = req.headers['x-forwarded-proto'] || 'http';
+                redirectUrl = `${protocol}://${req.get('host')}/login?verified=false&error=${encodeURIComponent(error.message || 'Error al verificar email')}`;
+            }
+            return res.redirect(redirectUrl);
         }
     }
 
