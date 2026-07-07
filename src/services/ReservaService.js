@@ -1,6 +1,7 @@
 import { ServerError } from '../error.js';
 import ReservaRepository from '../repositories/reserva.repository.js';
 import NotificationService from './NotificationService.js';
+import ConfigRepository from '../repositories/config.repository.js';
 
 class ReservaService {
     static async getAll() {
@@ -53,11 +54,19 @@ class ReservaService {
         });
 
         // 5. Enviar notificación de confirmación
+        let precioCancha = 5000;
+        try {
+            const precioStr = await ConfigRepository.getByKey('precio_cancha');
+            if (precioStr) precioCancha = parseInt(precioStr, 10);
+        } catch (err) {
+            console.error('Error al obtener el precio de cancha para la notificacion:', err);
+        }
+
         await NotificationService.enviarConfirmacionReserva(
             usuario_id,
             { fecha, hora },
             1,          // cantidadDias (ajustá según tu lógica)
-            2000,       // montoTotal (ajustá según tu lógica)
+            precioCancha, // montoTotal dinámico de la base de datos
             3           // plazo en días para pagar
         );
 

@@ -7,6 +7,7 @@ import { pool } from './config/db.js';
 import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
+import configRouter from './routes/config.router.js';
 import { apagarLuz, encenderLuz } from './services/ShellyService.js';
 import { iniciarSincronizadorLuces } from './services/SchedulerService.js';
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/reservas', reservasRouter);
+app.use('/api/configuracion', configRouter);
 
 // Endpoint de prueba para verificar conexión MySQL
 app.get('/ping', async (req, res) => {
