@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import { getVerificationEmailHtml } from "../utils/emailTemplates.js";
 
 class AuthService {
-    static async register(userData) {
+    static async register(userData, originHost = null) {
         const { nombre, apellido, dni, telefono, email, password, rol } = userData;
 
         const user = await UserRepository.getByEmail(email);
@@ -33,7 +33,8 @@ class AuthService {
             ENVIROMENT.JWT_SECRET
         );
 
-        const link = `${ENVIROMENT.URL_BACKEND}/api/auth/verify-email/${verification_token}`;
+        const baseBackendUrl = originHost || ENVIROMENT.URL_BACKEND || 'http://localhost:8080';
+        const link = `${baseBackendUrl}/api/auth/verify-email/${verification_token}`;
         await mailTransporter.sendMail({
             from: ENVIROMENT.GMAIL_USER,
             to: email,
