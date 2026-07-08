@@ -188,15 +188,16 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
       <p style="margin: 0 0 12px 0; color: #1e40af;">Tienes un plazo de <strong>${plazoDias} días</strong> para abonar la reserva. De lo contrario, se cancelará automáticamente.</p>
       
       <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 500;">Opciones de pago disponibles:</p>
-      <ul style="margin: 0; padding-left: 20px; color: #1e40af; line-height: 1.5;">
-        <li style="margin-bottom: 6px;">
+      <ul style="margin: 0; padding-left: 20px; color: #1e40af; line-height: 1.6;">
+        <li style="margin-bottom: 12px;">
           <strong>Transferencia Bancaria:</strong><br>
-          CBU: <code>1234567890123456789012</code><br>
-          Alias: <code>MUNICIPALIDAD.PADEL</code><br>
-          <em>Envía el comprobante a: <a href="mailto:pagos@municipalidad.com" style="color: #1d4ed8; text-decoration: underline;">pagos@municipalidad.com</a></em>
+          Titular: <code>MUNICIP DE ALDEA SAN ANTONIO</code><br>
+          CBU: <code>3860046101000000015731</code><br>
+          Alias: <code>libredisponibilidad</code><br>
+          <em style="display: block; margin-top: 4px;">Envía el comprobante de pago por mensaje de WhatsApp al <a href="https://wa.me/5493446503291" style="color: #1d4ed8; text-decoration: underline; font-weight: 600;">3446-503291</a> (los pagos por mensaje se reciben de <strong>7:00 a 13:00 hs</strong>).</em>
         </li>
         <li>
-          <strong>Pago Presencial:</strong> Acércate a la ventanilla de Rentas de la Municipalidad.
+          <strong>Pago Presencial:</strong> Acércate a las ventanillas de la Municipalidad (los pagos por ventanilla se reciben de <strong>7:00 a 12:00 hs</strong>).
         </li>
       </ul>
     </div>
