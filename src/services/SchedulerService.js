@@ -43,7 +43,7 @@ export async function checkActiveReservation() {
             return false;
         }
 
-        const nowMs = localNow.getTime();
+        const nowMs = now.getTime();
 
         for (const r of rows) {
             let fechaStr = r.fecha;

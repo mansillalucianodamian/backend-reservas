@@ -8,13 +8,17 @@ export async function encenderLuz() {
 
     if (SHELLY_CLOUD_URL && SHELLY_DEVICE_ID && SHELLY_AUTH_KEY) {
         console.log(`[SHELLY CLOUD]: Enviando comando ENCENDER a dispositivo: ${SHELLY_DEVICE_ID}`);
-        const url = `${SHELLY_CLOUD_URL}/device/status/control`;
-        return axios.get(url, {
-            params: {
-                id: SHELLY_DEVICE_ID,
-                auth_key: SHELLY_AUTH_KEY,
-                turn: 'on',
-                channel: 0
+        const url = `${SHELLY_CLOUD_URL}/device/relay/control`;
+        
+        const params = new URLSearchParams();
+        params.append('id', SHELLY_DEVICE_ID);
+        params.append('auth_key', SHELLY_AUTH_KEY);
+        params.append('turn', 'on');
+        params.append('channel', '0');
+
+        return axios.post(url, params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
     }
@@ -28,13 +32,17 @@ export async function apagarLuz() {
 
     if (SHELLY_CLOUD_URL && SHELLY_DEVICE_ID && SHELLY_AUTH_KEY) {
         console.log(`[SHELLY CLOUD]: Enviando comando APAGAR a dispositivo: ${SHELLY_DEVICE_ID}`);
-        const url = `${SHELLY_CLOUD_URL}/device/status/control`;
-        return axios.get(url, {
-            params: {
-                id: SHELLY_DEVICE_ID,
-                auth_key: SHELLY_AUTH_KEY,
-                turn: 'off',
-                channel: 0
+        const url = `${SHELLY_CLOUD_URL}/device/relay/control`;
+
+        const params = new URLSearchParams();
+        params.append('id', SHELLY_DEVICE_ID);
+        params.append('auth_key', SHELLY_AUTH_KEY);
+        params.append('turn', 'off');
+        params.append('channel', '0');
+
+        return axios.post(url, params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
     }
