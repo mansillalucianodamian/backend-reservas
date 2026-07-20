@@ -44,7 +44,7 @@ class ReservaController {
     static async create(req, res) {
         try {
             const userId = req.user.id;
-            const { fecha, hora } = req.body;
+            const { fecha, hora, tipo = 'cancha', motivo } = req.body;
 
             if (!fecha || !hora) {
                 return res.status(400).json({
@@ -56,7 +56,9 @@ class ReservaController {
             const result = await ReservaService.create({
                 fecha,
                 hora,
-                usuario_id: userId
+                tipo,
+                usuario_id: userId,
+                motivo
             });
 
             res.status(201).json({ ok: true, reserva: result });
@@ -99,8 +101,10 @@ class ReservaController {
             const { id } = req.params;
             const reserva = await ReservaService.aprobar(id);
 
-            // 🔹 Programar encendido 5 min antes y apagado 90 min después
-            programarReserva(reserva);
+            // 🔹 Programar encendido 5 min antes y apagado 90 min después solo si es cancha
+            if (reserva.tipo === 'cancha') {
+                programarReserva(reserva);
+            }
 
             res.json({ ok: true, reserva });
         } catch (error) {
@@ -118,8 +122,10 @@ class ReservaController {
             // Responder rápido al cliente
             res.json({ ok: true, ...result });
 
-            // Intentar apagar Shelly en segundo plano
-            apagarLuz().catch(err => console.error("Shelly no disponible:", err.message));
+            // Intentar apagar Shelly en segundo plano solo si es cancha
+            if (result.tipo === 'cancha') {
+                apagarLuz().catch(err => console.error("Shelly no disponible:", err.message));
+            }
         } catch (err) {
             next(err);
         }
@@ -141,6 +147,7 @@ class ReservaController {
     static async getDisponibles(req, res) {
         try {
             const { fecha } = req.params;
+            const { tipo = 'cancha' } = req.query;
 
             if (!fecha) {
                 return res.status(400).json({
@@ -149,7 +156,7 @@ class ReservaController {
                 });
             }
 
-            const horarios = await ReservaService.getDisponibles(fecha);
+            const horarios = await ReservaService.getDisponibles(fecha, tipo);
             res.json({ ok: true, horarios });
         } catch (error) {
             res.status(error.status || 500).json({

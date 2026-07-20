@@ -1,11 +1,11 @@
 import { pool } from '../config/db.js';
 
 class ReservaRepository {
-    static async findByFechaHora(fecha, hora) {
+    static async findByFechaHora(fecha, hora, tipo = 'cancha') {
         try {
             const [rows] = await pool.query(
-                'SELECT * FROM reservas WHERE fecha = ? AND hora = ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada")',
-                [fecha, hora]
+                'SELECT * FROM reservas WHERE fecha = ? AND hora = ? AND tipo = ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada")',
+                [fecha, hora, tipo]
             );
 
             // Si no hay reservas, devolvemos null
@@ -17,6 +17,7 @@ class ReservaRepository {
             const mapped = rows.map(r => ({
                 id: r.id,
                 usuario_id: r.usuario_id,
+                tipo: r.tipo,
                 fecha: r.fecha,
                 hora: r.hora.trim().substring(0, 5), // "08:00:00" → "08:00"
                 estado: r.estado
@@ -30,17 +31,18 @@ class ReservaRepository {
 
 
     static async create(reserva) {
-        const { usuario_id, fecha, hora, estado, motivo } = reserva;
+        const { usuario_id, fecha, hora, estado, motivo, tipo = 'cancha' } = reserva;
         try {
             // Si viene motivo (bloqueo), lo insertamos; si no, lo dejamos en NULL
             const [result] = await pool.query(
-                'INSERT INTO reservas (usuario_id, fecha, hora, estado, motivo) VALUES (?, ?, ?, ?, ?)',
-                [usuario_id, fecha, hora, estado, motivo || null]
+                'INSERT INTO reservas (usuario_id, tipo, fecha, hora, estado, motivo) VALUES (?, ?, ?, ?, ?, ?)',
+                [usuario_id, tipo, fecha, hora, estado, motivo || null]
             );
 
             return {
                 id: result.insertId,
                 usuario_id,
+                tipo,
                 fecha,
                 hora,
                 estado,
@@ -56,6 +58,7 @@ class ReservaRepository {
             const [rows] = await pool.query(`
       SELECT 
         r.id,
+        r.tipo,
         r.fecha,
         r.hora,
         r.estado,
@@ -87,7 +90,7 @@ class ReservaRepository {
     static async findByUsuarioYSemana(usuario_id, inicioSemana, finSemana) {
         try {
             const [rows] = await pool.query(
-                'SELECT * FROM reservas WHERE usuario_id = ? AND fecha BETWEEN ? AND ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada", "Bloqueado", "Bloqueada")',
+                'SELECT * FROM reservas WHERE usuario_id = ? AND tipo = "cancha" AND fecha BETWEEN ? AND ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada", "Bloqueado", "Bloqueada")',
                 [usuario_id, inicioSemana.toISOString().split('T')[0], finSemana.toISOString().split('T')[0]]
             );
             return rows;
@@ -153,7 +156,7 @@ class ReservaRepository {
     static async getByFecha(fecha) {
         try {
             const [rows] = await pool.query(
-                "SELECT id, usuario_id, fecha, hora, estado FROM reservas WHERE fecha = ?",
+                "SELECT id, usuario_id, tipo, fecha, hora, estado FROM reservas WHERE fecha = ?",
                 [fecha]
             );
             return rows;
@@ -167,6 +170,7 @@ class ReservaRepository {
             const [rows] = await pool.query(`
       SELECT 
         r.id,
+        r.tipo,
         r.fecha,
         r.hora,
         r.estado,

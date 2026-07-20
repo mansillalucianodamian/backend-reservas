@@ -106,7 +106,7 @@ const baseTemplate = (contentHtml, preheaderText = '') => {
 export const getVerificationEmailHtml = (nombre, link) => {
   const content = `
     <h2 style="margin-top: 0; color: #1e3a8a; font-size: 20px; font-weight: 600; text-align: center;">¡Hola, ${nombre}!</h2>
-    <p style="text-align: center; margin-bottom: 24px; color: #4b5563;">Gracias por registrarte en nuestro portal de reservas. Para activar tu cuenta y poder reservar las canchas de pádel, es necesario verificar tu dirección de correo electrónico.</p>
+    <p style="text-align: center; margin-bottom: 24px; color: #4b5563;">Gracias por registrarte en nuestro portal de reservas municipal. Para activar tu cuenta y poder realizar reservas de canchas y espacios (como el quincho), es necesario verificar tu dirección de correo electrónico.</p>
     
     <div style="text-align: center; margin: 32px 0;">
       <a href="${link}" style="display: inline-block; background-color: #0284c7; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2); transition: background-color 0.2s ease;">
@@ -151,15 +151,58 @@ export const getPasswordResetEmailHtml = (nombre, link) => {
 /**
  * Template for Booking Confirmation
  */
-export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, total, plazoDias }) => {
+export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, total, plazoDias, tipo = 'cancha' }) => {
   const fechaFormateada = formatFecha(fecha);
   const horaFormateada = formatHora(hora);
+  const isQuincho = tipo === 'quincho';
   
-  const content = `
+  const content = isQuincho ? `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span style="display: inline-block; background-color: #dbeafe; color: #1e40af; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center; font-weight: bold;">📋</span>
+      <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho registrada!</h2>
+      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva para el Quincho Municipal.</p>
+    </div>
+
+    <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">🏡 Espacio:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">Quincho Municipal</td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">🕒 Turno / Horario:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${horaFormateada} hs</td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a;">💲 Tarifa de uso:</td>
+        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a; font-size: 17px;">$${total} <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Se abona en la Municipalidad)</span></td>
+      </tr>
+    </table>
+
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 6px; margin: 24px 0; font-size: 14px;">
+      <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 15px; font-weight: 600; display: flex; align-items: center;">
+        <span style="font-size: 18px; margin-right: 6px;">ℹ️</span> Información Importante sobre Pago e Ingreso
+      </h3>
+      <p style="margin: 0 0 12px 0; color: #1e40af;">Te recordamos que la tarifa del quincho se abona <strong>posteriormente al uso</strong> (o al momento de coordinar el retiro de llaves en la Municipalidad).</p>
+      
+      <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 500;">Puntos de atención e información:</p>
+      <ul style="margin: 0; padding-left: 20px; color: #1e40af; line-height: 1.6;">
+        <li style="margin-bottom: 8px;">
+          <strong>Atención Presencial y Retiro de Llaves:</strong> Acércate a las ventanillas de la Municipalidad de <strong>7:00 a 12:00 hs</strong>.
+        </li>
+        <li>
+          <strong>Consultas por WhatsApp:</strong> Podés enviar un mensaje al <a href="https://wa.me/5493446503291" style="color: #1d4ed8; text-decoration: underline; font-weight: 600;">3446-503291</a> (atención de 7:00 a 13:00 hs).
+        </li>
+      </ul>
+    </div>
+  ` : `
     <div style="text-align: center; margin-bottom: 24px;">
       <span style="display: inline-block; background-color: #fef3c7; color: #d97706; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center; font-weight: bold;">!</span>
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva recibida! (Pendiente de pago)</h2>
-      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva. Recuerda que para confirmarla totalmente es necesario realizar el pago.</p>
+      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva de cancha. Recuerda que para confirmarla totalmente es necesario realizar el pago.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
@@ -202,26 +245,33 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
       </ul>
     </div>
   `;
-  return baseTemplate(content, `Reserva recibida (Pendiente de pago) para el día ${fechaFormateada}`);
+  return baseTemplate(content, isQuincho ? `Reserva del Quincho Municipal para el día ${fechaFormateada}` : `Reserva recibida (Pendiente de pago) para el día ${fechaFormateada}`);
 };
 
 /**
  * Template for Reservation Cancellation / Warning
  */
-export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motivo }) => {
+export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motivo, tipo = 'cancha' }) => {
   const fechaFormateada = formatFecha(fecha);
   const horaFormateada = formatHora(hora);
+  const isQuincho = tipo === 'quincho';
   
   const content = `
     <div style="text-align: center; margin-bottom: 24px;">
       <span style="display: inline-block; background-color: #fee2e2; color: #991b1b; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center;">⚠</span>
-      <h2 style="margin: 16px 0 8px 0; color: #991b1b; font-size: 22px; font-weight: 700;">Aviso de cancelación de turno</h2>
+      <h2 style="margin: 16px 0 8px 0; color: #991b1b; font-size: 22px; font-weight: 700;">Aviso de cancelación de reserva</h2>
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, te informamos sobre un cambio importante en tu reserva.</p>
     </div>
 
-    <p style="color: #4b5563;">El turno que tenías agendado para jugar al pádel ha sido cancelado por la administración.</p>
+    <p style="color: #4b5563;">${isQuincho ? 'La reserva que tenías agendada para el Quincho Municipal ha sido cancelada por la administración.' : 'El turno que tenías agendado para jugar al pádel ha sido cancelado por la administración.'}</p>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
+      ${isQuincho ? `
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 30%;">🏡 Espacio:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">Quincho Municipal</td>
+      </tr>
+      ` : ''}
       <tr>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 30%;">📅 Fecha:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
@@ -237,20 +287,46 @@ export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motiv
     </table>
 
     <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 4px; margin: 24px 0; font-size: 14px; color: #991b1b;">
-      Lamentamos los inconvenientes ocasionados. Ya puedes ingresar al portal web para reagendar un nuevo turno en la fecha y horario de tu preferencia.
+      Lamentamos los inconvenientes ocasionados. Ya puedes ingresar al portal web para consultar disponibilidad y reagendar en la fecha de tu preferencia.
     </div>
   `;
-  return baseTemplate(content, `Aviso: Tu turno del día ${fechaFormateada} a las ${horaFormateada} fue cancelado`);
+  return baseTemplate(content, `Aviso: Tu reserva del día ${fechaFormateada} fue cancelada`);
 };
 
 /**
  * Template for Reservation Payment Received / Approved
  */
-export const getBookingApprovedEmailHtml = (nombre, { fecha, hora }) => {
+export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'cancha' }) => {
   const fechaFormateada = formatFecha(fecha);
   const horaFormateada = formatHora(hora);
+  const isQuincho = tipo === 'quincho';
   
-  const content = `
+  const content = isQuincho ? `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span style="display: inline-block; background-color: #d1fae5; color: #065f46; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center;">✓</span>
+      <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho aprobada!</h2>
+      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, tu solicitud de reserva para el Quincho Municipal ha sido aprobada.</p>
+    </div>
+
+    <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">🏡 Espacio:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">Quincho Municipal</td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">🕒 Turno / Horario:</td>
+        <td style="padding: 16px 20px; color: #1f2937;">${horaFormateada} hs</td>
+      </tr>
+    </table>
+
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 24px 0; font-size: 14px; color: #1e40af;">
+      <strong>Información de la reserva:</strong> Recordá acércate a la Municipalidad para coordinar el retiro de llaves y realizar el pago correspondiente. ¡Que disfrutes del espacio!
+    </div>
+  ` : `
     <div style="text-align: center; margin-bottom: 24px;">
       <span style="display: inline-block; background-color: #d1fae5; color: #065f46; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center;">✓</span>
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Pago recibido y turno confirmado!</h2>
@@ -272,6 +348,7 @@ export const getBookingApprovedEmailHtml = (nombre, { fecha, hora }) => {
       <strong>Información del turno:</strong> Las luces de la cancha de pádel se encenderán automáticamente <strong>5 minutos antes</strong> del horario de tu reserva y se apagarán al finalizar. ¡Que tengas un excelente partido!
     </div>
   `;
-  return baseTemplate(content, `¡Pago recibido! Turno confirmado para el día ${fechaFormateada}`);
+  return baseTemplate(content, isQuincho ? `¡Reserva aprobada! Quincho para el día ${fechaFormateada}` : `¡Pago recibido! Turno confirmado para el día ${fechaFormateada}`);
 };
+
 

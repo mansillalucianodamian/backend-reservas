@@ -101,7 +101,20 @@ class AuthController {
     static async forgotPassword(req, res) {
         try {
             const { email } = req.body;
-            const result = await PasswordService.forgotPassword(email);
+            
+            let frontendUrl = ENVIROMENT.URL_FRONTEND || 'http://localhost:4200';
+            
+            // Si URL_FRONTEND es localhost o 127.0.0.1 (valores predeterminados) pero la petición proviene de un host real (producción),
+            // se construye de manera dinámica usando el host de la petición.
+            if (frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1')) {
+                const host = req.get('host');
+                if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+                    const protocol = req.headers['x-forwarded-proto'] || 'http';
+                    frontendUrl = `${protocol}://${host}`;
+                }
+            }
+
+            const result = await PasswordService.forgotPassword(email, frontendUrl);
             res.json(result);
         } catch (error) {
             res.status(error.status || 500).json({

@@ -8,7 +8,7 @@ import { getPasswordResetEmailHtml } from '../utils/emailTemplates.js';
 
 class PasswordService {
     // 👉 Paso 1: Solicitar recuperación
-    static async forgotPassword(email) {
+    static async forgotPassword(email, frontendUrl = ENVIROMENT.URL_FRONTEND) {
         const user = await UserRepository.getByEmail(email);
         if (!user) {
             throw new ServerError(404, 'Usuario no encontrado');
@@ -28,7 +28,7 @@ class PasswordService {
         });
 
         // Enviar correo con el link
-        const link = `${ENVIROMENT.URL_FRONTEND}/reset-password/${reset_token}`;
+        const link = `${frontendUrl}/reset-password/${reset_token}`;
         await mailTransporter.sendMail({
             from: ENVIROMENT.GMAIL_USER,
             to: email,

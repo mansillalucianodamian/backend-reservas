@@ -4,7 +4,7 @@ import ENVIROMENT from '../config/enviroment.config.js';
 import { getBookingConfirmationEmailHtml, getReservationCancellationEmailHtml, getBookingApprovedEmailHtml, formatFecha } from '../utils/emailTemplates.js';
 
 class NotificationService {
-    static async enviarAdvertencia(usuario_id, motivo, fecha, hora) {
+    static async enviarAdvertencia(usuario_id, motivo, fecha, hora, tipo = 'cancha') {
         try {
             // Buscar el usuario en la BD
             const usuario = await UserRepository.getById(usuario_id);
@@ -17,8 +17,8 @@ class NotificationService {
             const mailOptions = {
                 from: `"Municipalidad de Aldea San Antonio" <${ENVIROMENT.GMAIL_USER}>`,
                 to: usuario.email,
-                subject: `Aviso: Tu turno del día ${formatFecha(fecha)} fue cancelado`,
-                html: getReservationCancellationEmailHtml(usuario.nombre, { fecha, hora, motivo })
+                subject: `Aviso: Tu reserva del día ${formatFecha(fecha)} fue cancelada`,
+                html: getReservationCancellationEmailHtml(usuario.nombre, { fecha, hora, motivo, tipo })
             };
 
             // Enviar correo usando el transporter ya configurado
@@ -37,16 +37,22 @@ class NotificationService {
                 return;
             }
 
+            const tipo = reserva.tipo || 'cancha';
+            const subject = tipo === 'quincho'
+                ? `Confirmación de reserva - Quincho Municipal del ${formatFecha(reserva.fecha)}`
+                : `Confirmación de reserva - Turno del ${formatFecha(reserva.fecha)}`;
+
             const mailOptions = {
                 from: `"Municipalidad de Aldea San Antonio" <${ENVIROMENT.GMAIL_USER}>`,
                 to: usuario.email,
-                subject: `Confirmación de reserva - Turno del ${formatFecha(reserva.fecha)}`,
+                subject,
                 html: getBookingConfirmationEmailHtml(usuario.nombre, {
                     fecha: reserva.fecha,
                     hora: reserva.hora,
                     dias,
                     total,
-                    plazoDias
+                    plazoDias,
+                    tipo
                 })
             };
 
@@ -65,13 +71,19 @@ class NotificationService {
                 return;
             }
 
+            const tipo = reserva.tipo || 'cancha';
+            const subject = tipo === 'quincho'
+                ? `¡Reserva Aprobada! Quincho del ${formatFecha(reserva.fecha)}`
+                : `¡Pago Recibido! Turno del ${formatFecha(reserva.fecha)} confirmado`;
+
             const mailOptions = {
                 from: `"Municipalidad de Aldea San Antonio" <${ENVIROMENT.GMAIL_USER}>`,
                 to: usuario.email,
-                subject: `¡Pago Recibido! Turno del ${formatFecha(reserva.fecha)} confirmado`,
+                subject,
                 html: getBookingApprovedEmailHtml(usuario.nombre, {
                     fecha: reserva.fecha,
-                    hora: reserva.hora
+                    hora: reserva.hora,
+                    tipo
                 })
             };
 
