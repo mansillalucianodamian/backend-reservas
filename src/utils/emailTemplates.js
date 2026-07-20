@@ -158,33 +158,32 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
   
   const content = isQuincho ? `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span style="display: inline-block; background-color: #dbeafe; color: #1e40af; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center; font-weight: bold;">📋</span>
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho registrada!</h2>
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva para el Quincho Municipal.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">🏡 Espacio:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">Espacio:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">Quincho Municipal</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Fecha:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">🕒 Turno / Horario:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Turno / Horario:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${horaFormateada} hs</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a;">💲 Tarifa de uso:</td>
+        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a;">Tarifa de uso:</td>
         <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a; font-size: 17px;">$${total} <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Se abona en la Municipalidad)</span></td>
       </tr>
     </table>
 
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 6px; margin: 24px 0; font-size: 14px;">
-      <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 15px; font-weight: 600; display: flex; align-items: center;">
-        <span style="font-size: 18px; margin-right: 6px;">ℹ️</span> Información Importante sobre Pago e Ingreso
+      <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 15px; font-weight: 600;">
+        Información Importante sobre Pago e Ingreso
       </h3>
       <p style="margin: 0 0 12px 0; color: #1e40af;">Te recordamos que la tarifa del quincho se abona <strong>posteriormente al uso</strong> (o al momento de coordinar el retiro de llaves en la Municipalidad).</p>
       
@@ -200,33 +199,32 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
     </div>
   ` : `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span style="display: inline-block; background-color: #fef3c7; color: #d97706; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center; font-weight: bold;">!</span>
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva recibida! (Pendiente de pago)</h2>
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva de cancha. Recuerda que para confirmarla totalmente es necesario realizar el pago.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">Fecha:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">🕒 Horario:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Horario:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${horaFormateada} hs</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">🔢 Turnos / Días:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Turnos / Días:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${dias} ${dias === 1 ? 'turno' : 'turnos'}</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a;">💲 Total a pagar:</td>
+        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a;">Total a pagar:</td>
         <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a; font-size: 17px;">$${total}</td>
       </tr>
     </table>
 
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 6px; margin: 24px 0; font-size: 14px;">
-      <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 15px; font-weight: 600; display: flex; align-items: center;">
-        <span style="font-size: 18px; margin-right: 6px;">⏳</span> Información Importante de Pago
+      <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 15px; font-weight: 600;">
+        Información Importante de Pago
       </h3>
       <p style="margin: 0 0 12px 0; color: #1e40af;">Tienes un plazo de <strong>${plazoDias} días</strong> para abonar la reserva. De lo contrario, se cancelará automáticamente.</p>
       
@@ -258,7 +256,6 @@ export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motiv
   
   const content = `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span style="display: inline-block; background-color: #fee2e2; color: #991b1b; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center;">⚠</span>
       <h2 style="margin: 16px 0 8px 0; color: #991b1b; font-size: 22px; font-weight: 700;">Aviso de cancelación de reserva</h2>
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, te informamos sobre un cambio importante en tu reserva.</p>
     </div>
@@ -268,20 +265,20 @@ export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motiv
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
       ${isQuincho ? `
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 30%;">🏡 Espacio:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 30%;">Espacio:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">Quincho Municipal</td>
       </tr>
       ` : ''}
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 30%;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 30%;">Fecha:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">🕒 Horario:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Horario:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${horaFormateada} hs</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; font-weight: 600; color: #991b1b; vertical-align: top;">📝 Motivo:</td>
+        <td style="padding: 16px 20px; font-weight: 600; color: #991b1b; vertical-align: top;">Motivo:</td>
         <td style="padding: 16px 20px; color: #1f2937; font-style: italic;">"${motivo}"</td>
       </tr>
     </table>
@@ -303,22 +300,21 @@ export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'canch
   
   const content = isQuincho ? `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span style="display: inline-block; background-color: #d1fae5; color: #065f46; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center;">✓</span>
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho aprobada!</h2>
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, tu solicitud de reserva para el Quincho Municipal ha sido aprobada.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">🏡 Espacio:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">Espacio:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">Quincho Municipal</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Fecha:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">🕒 Turno / Horario:</td>
+        <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">Turno / Horario:</td>
         <td style="padding: 16px 20px; color: #1f2937;">${horaFormateada} hs</td>
       </tr>
     </table>
@@ -328,18 +324,17 @@ export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'canch
     </div>
   ` : `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span style="display: inline-block; background-color: #d1fae5; color: #065f46; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; text-align: center;">✓</span>
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Pago recibido y turno confirmado!</h2>
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu pago de manera exitosa. Tu turno está totalmente confirmado.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
       <tr>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">📅 Fecha:</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563; width: 40%;">Fecha:</td>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">${fechaFormateada}</td>
       </tr>
       <tr>
-        <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">🕒 Horario:</td>
+        <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">Horario:</td>
         <td style="padding: 16px 20px; color: #1f2937;">${horaFormateada} hs</td>
       </tr>
     </table>

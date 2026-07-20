@@ -172,37 +172,61 @@ class ReservaService {
             throw new ServerError(400, 'Faltan datos obligatorios: fecha y hora');
         }
 
-        const reservaExistente = await ReservaRepository.findByFechaHora(fecha, hora, tipo);
+        let horariosABloquear = [];
 
-        if (reservaExistente) {
-            const estadoAnterior = reservaExistente.estado;
-
-            await ReservaRepository.updateById(reservaExistente.id, {
-                estado: 'Bloqueado',
-                motivo: motivo || 'Bloqueo de horario'
-            });
-
-            if (estadoAnterior === 'Pendiente' || estadoAnterior === 'Aprobado') {
-                await NotificationService.enviarAdvertencia(
-                    reservaExistente.usuario_id,
-                    motivo || 'Bloqueo de horario',
-                    reservaExistente.fecha,
-                    reservaExistente.hora,
-                    reservaExistente.tipo
-                );
+        if (Array.isArray(hora)) {
+            horariosABloquear = hora.map(h => h.toString().trim().substring(0, 5));
+        } else if (typeof hora === 'string' && (hora.toLowerCase() === 'todos' || hora.toLowerCase() === 'all')) {
+            if (tipo === 'quincho') {
+                horariosABloquear = ['09:00', '19:00'];
+            } else {
+                horariosABloquear = [];
+                for (let h = 7; h <= 24; h++) {
+                    horariosABloquear.push(h === 24 ? '00:00' : `${h.toString().padStart(2, '0')}:00`);
+                }
             }
-
-            return { ...reservaExistente, estado: 'Bloqueado', motivo: motivo || 'Bloqueo de horario' };
+        } else {
+            horariosABloquear = [hora.toString().trim().substring(0, 5)];
         }
 
-        return await ReservaRepository.create({
-            usuario_id: null,
-            tipo,
-            fecha,
-            hora,
-            motivo: motivo || 'Bloqueo de horario',
-            estado: 'Bloqueado'
-        });
+        const resultados = [];
+
+        for (const h of horariosABloquear) {
+            const reservaExistente = await ReservaRepository.findByFechaHora(fecha, h, tipo);
+
+            if (reservaExistente) {
+                const estadoAnterior = reservaExistente.estado;
+
+                await ReservaRepository.updateById(reservaExistente.id, {
+                    estado: 'Bloqueado',
+                    motivo: motivo || 'Bloqueo de horario'
+                });
+
+                if (estadoAnterior === 'Pendiente' || estadoAnterior === 'Aprobado') {
+                    await NotificationService.enviarAdvertencia(
+                        reservaExistente.usuario_id,
+                        motivo || 'Bloqueo de horario',
+                        reservaExistente.fecha,
+                        reservaExistente.hora,
+                        reservaExistente.tipo
+                    );
+                }
+
+                resultados.push({ ...reservaExistente, estado: 'Bloqueado', motivo: motivo || 'Bloqueo de horario' });
+            } else {
+                const nuevaReservaBloqueada = await ReservaRepository.create({
+                    usuario_id: null,
+                    tipo,
+                    fecha,
+                    hora: h,
+                    motivo: motivo || 'Bloqueo de horario',
+                    estado: 'Bloqueado'
+                });
+                resultados.push(nuevaReservaBloqueada);
+            }
+        }
+
+        return resultados.length === 1 ? resultados[0] : resultados;
     }
 
     static async getDisponibles(fecha, tipo = 'cancha') {
