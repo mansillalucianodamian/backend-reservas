@@ -55,7 +55,6 @@ class ReservaService {
             motivo: motivo || null
         });
 
-        // 4. Enviar notificación de confirmación
         let precio = 5000;
         if (tipo === 'quincho') {
             try {
@@ -65,6 +64,9 @@ class ReservaService {
             } catch (err) {
                 console.error('Error al obtener el precio de quincho para la notificacion:', err);
                 precio = 21500;
+            }
+            if (motivo && motivo.includes('Aire Acondicionado: SÍ')) {
+                precio = precio * 2;
             }
         } else {
             let precioCancha = 5000;

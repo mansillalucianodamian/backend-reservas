@@ -52,7 +52,8 @@ class NotificationService {
                     dias,
                     total,
                     plazoDias,
-                    tipo
+                    tipo,
+                    motivo: reserva.motivo
                 })
             };
 
@@ -83,7 +84,8 @@ class NotificationService {
                 html: getBookingApprovedEmailHtml(usuario.nombre, {
                     fecha: reserva.fecha,
                     hora: reserva.hora,
-                    tipo
+                    tipo,
+                    motivo: reserva.motivo
                 })
             };
 
