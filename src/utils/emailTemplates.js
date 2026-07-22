@@ -151,14 +151,14 @@ export const getPasswordResetEmailHtml = (nombre, link) => {
 /**
  * Template for Booking Confirmation
  */
-export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, total, plazoDias, tipo = 'cancha', motivo = '' }) => {
+export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, total, plazoDias, tipo = 'cancha', motivo = '', con_aire = 0 }) => {
   const fechaFormateada = formatFecha(fecha);
   const horaFormateada = formatHora(hora);
   const isQuincho = tipo === 'quincho';
   
   let acRow = '';
-  if (isQuincho && motivo) {
-    const conAire = motivo.includes('Aire Acondicionado: SÍ');
+  if (isQuincho) {
+    const conAire = !!con_aire || (motivo && motivo.includes('Aire Acondicionado: SÍ'));
     acRow = `
       <tr>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Aire Acondicionado:</td>
@@ -305,14 +305,14 @@ export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motiv
 /**
  * Template for Reservation Payment Received / Approved
  */
-export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'cancha', motivo = '' }) => {
+export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'cancha', motivo = '', con_aire = 0 }) => {
   const fechaFormateada = formatFecha(fecha);
   const horaFormateada = formatHora(hora);
   const isQuincho = tipo === 'quincho';
   
   let acRow = '';
-  if (isQuincho && motivo) {
-    const conAire = motivo.includes('Aire Acondicionado: SÍ');
+  if (isQuincho) {
+    const conAire = !!con_aire || (motivo && motivo.includes('Aire Acondicionado: SÍ'));
     acRow = `
       <tr>
         <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">Aire Acondicionado:</td>

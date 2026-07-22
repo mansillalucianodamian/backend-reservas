@@ -20,7 +20,8 @@ class ReservaRepository {
                 tipo: r.tipo,
                 fecha: r.fecha,
                 hora: r.hora.trim().substring(0, 5), // "08:00:00" → "08:00"
-                estado: r.estado
+                estado: r.estado,
+                con_aire: r.con_aire
             }));
             return mapped[0];
         } catch (error) {
@@ -31,12 +32,12 @@ class ReservaRepository {
 
 
     static async create(reserva) {
-        const { usuario_id, fecha, hora, estado, motivo, tipo = 'cancha' } = reserva;
+        const { usuario_id, fecha, hora, estado, motivo, tipo = 'cancha', con_aire = 0 } = reserva;
         try {
             // Si viene motivo (bloqueo), lo insertamos; si no, lo dejamos en NULL
             const [result] = await pool.query(
-                'INSERT INTO reservas (usuario_id, tipo, fecha, hora, estado, motivo) VALUES (?, ?, ?, ?, ?, ?)',
-                [usuario_id, tipo, fecha, hora, estado, motivo || null]
+                'INSERT INTO reservas (usuario_id, tipo, fecha, hora, estado, motivo, con_aire) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [usuario_id, tipo, fecha, hora, estado, motivo || null, con_aire ? 1 : 0]
             );
 
             return {
@@ -46,7 +47,8 @@ class ReservaRepository {
                 fecha,
                 hora,
                 estado,
-                motivo: motivo || null
+                motivo: motivo || null,
+                con_aire: con_aire ? 1 : 0
             };
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo crear la reserva', error);
@@ -64,6 +66,7 @@ class ReservaRepository {
         r.estado,
         r.usuario_id,
         r.motivo,
+        r.con_aire,
         CONCAT(u.apellido, ', ', u.nombre) AS usuario
       FROM reservas r
       LEFT JOIN usuarios u ON r.usuario_id = u.id
@@ -175,6 +178,7 @@ class ReservaRepository {
         r.hora,
         r.estado,
         r.usuario_id,
+        r.con_aire,
         CONCAT(u.apellido, ', ', u.nombre) AS usuario
       FROM reservas r
       LEFT JOIN usuarios u ON r.usuario_id = u.id

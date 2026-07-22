@@ -19,7 +19,7 @@ class ReservaService {
     }
 
     static async create(data) {
-        const { usuario_id, fecha, hora, tipo = 'cancha', motivo } = data;
+        const { usuario_id, fecha, hora, tipo = 'cancha', motivo, con_aire = 0 } = data;
 
         if (!usuario_id || !fecha || !hora) {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
@@ -52,7 +52,8 @@ class ReservaService {
             fecha,
             hora,
             estado: 'Pendiente',
-            motivo: motivo || null
+            motivo: motivo || null,
+            con_aire: con_aire ? 1 : 0
         });
 
         let precio = 5000;
@@ -65,7 +66,7 @@ class ReservaService {
                 console.error('Error al obtener el precio de quincho para la notificacion:', err);
                 precio = 21500;
             }
-            if (motivo && motivo.includes('Aire Acondicionado: SÍ')) {
+            if (con_aire) {
                 precio = precio * 2;
             }
         } else {

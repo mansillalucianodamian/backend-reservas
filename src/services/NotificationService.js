@@ -53,7 +53,8 @@ class NotificationService {
                     total,
                     plazoDias,
                     tipo,
-                    motivo: reserva.motivo
+                    motivo: reserva.motivo,
+                    con_aire: reserva.con_aire
                 })
             };
 
@@ -85,7 +86,8 @@ class NotificationService {
                     fecha: reserva.fecha,
                     hora: reserva.hora,
                     tipo,
-                    motivo: reserva.motivo
+                    motivo: reserva.motivo,
+                    con_aire: reserva.con_aire
                 })
             };
 

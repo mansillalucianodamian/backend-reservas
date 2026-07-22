@@ -44,7 +44,7 @@ class ReservaController {
     static async create(req, res) {
         try {
             const userId = req.user.id;
-            const { fecha, hora, tipo = 'cancha', motivo } = req.body;
+            const { fecha, hora, tipo = 'cancha', motivo, con_aire } = req.body;
 
             if (!fecha || !hora) {
                 return res.status(400).json({
@@ -58,7 +58,8 @@ class ReservaController {
                 hora,
                 tipo,
                 usuario_id: userId,
-                motivo
+                motivo,
+                con_aire: con_aire ? 1 : 0
             });
 
             res.status(201).json({ ok: true, reserva: result });
