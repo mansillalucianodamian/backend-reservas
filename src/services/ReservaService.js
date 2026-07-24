@@ -154,13 +154,13 @@ class ReservaService {
         // Si es super admin → estado Cancelado
         if (user.rol === 'super_admin') {
             await ReservaRepository.updateById(id, { estado: 'Cancelado' });
-            return { ok: true, tipo: reserva.tipo };
+            return { ok: true, tipo: reserva.tipo, con_aire: reserva.con_aire };
         }
 
         // Si es usuario común → eliminar la reserva para liberar el horario
         if (user.rol === 'usuario' || user.rol === 'recepcionista') {
             await ReservaRepository.deleteById(id);
-            return { ok: true, message: 'Reserva eliminada, horario disponible', tipo: reserva.tipo };
+            return { ok: true, message: 'Reserva eliminada, horario disponible', tipo: reserva.tipo, con_aire: reserva.con_aire };
         }
 
         throw new ServerError(403, 'No autorizado para cancelar');

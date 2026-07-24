@@ -8,7 +8,7 @@ import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
 import configRouter from './routes/config.router.js';
-import { apagarLuz, encenderLuz } from './services/ShellyService.js';
+import { apagarLuz, encenderLuz, encenderAireQuincho, apagarAireQuincho } from './services/ShellyService.js';
 import { iniciarSincronizadorLuces } from './services/SchedulerService.js';
 
 const app = express();
@@ -54,6 +54,25 @@ app.get("/test-shelly/off", async (req, res) => {
   try {
     await apagarLuz();
     res.json({ ok: true, message: "Shelly apagado" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// Rutas de prueba para Shelly Quincho
+app.get("/test-shelly-quincho/on", async (req, res) => {
+  try {
+    await encenderAireQuincho();
+    res.json({ ok: true, message: "Shelly Quincho encendido" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+app.get("/test-shelly-quincho/off", async (req, res) => {
+  try {
+    await apagarAireQuincho();
+    res.json({ ok: true, message: "Shelly Quincho apagado" });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }

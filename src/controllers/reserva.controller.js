@@ -1,6 +1,6 @@
 import ReservaService from "../services/ReservaService.js";
+import { apagarLuz, apagarAireQuincho } from "../services/ShellyService.js";
 import { programarReserva } from "../services/SchedulerService.js";
-import { apagarLuz } from "../services/ShellyService.js";
 
 
 class ReservaController {
@@ -126,6 +126,8 @@ class ReservaController {
             // Intentar apagar Shelly en segundo plano solo si es cancha
             if (result.tipo === 'cancha') {
                 apagarLuz().catch(err => console.error("Shelly no disponible:", err.message));
+            } else if (result.tipo === 'quincho' && result.con_aire) {
+                apagarAireQuincho().catch(err => console.error("Shelly quincho no disponible:", err.message));
             }
         } catch (err) {
             next(err);
