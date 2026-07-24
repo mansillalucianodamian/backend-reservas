@@ -1,7 +1,7 @@
 import axios from 'axios';
 import ENVIROMENT from '../config/enviroment.config.js';
 
-const LOCAL_IP = '192.168.1.105'; // Fallback local para pruebas del usuario
+const LOCAL_IP = '192.168.0.14'; // Fallback local para pruebas del usuario
 
 export async function encenderLuz() {
     const { SHELLY_CLOUD_URL, SHELLY_DEVICE_ID, SHELLY_AUTH_KEY } = ENVIROMENT;
