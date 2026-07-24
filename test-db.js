@@ -1,17 +1,17 @@
 import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
-  host: '127.0.0.1',
-  port: 3306,
-  user: 'reservas_user',
-  password: 'reservas2026',
-  database: 'reservas'
+  host: 'localhost',
+  port: 3307,
+  user: 'root',
+  password: 'root',
+  database: 'reservas_padel'
 });
 
 const test = async () => {
   try {
-    const [rows] = await pool.query('SELECT 1+1 AS result');
-    console.log('Conexión OK:', rows[0].result);
+    const [rows] = await pool.query('DESCRIBE reservas');
+    console.log(JSON.stringify(rows, null, 2));
   } catch (err) {
     console.error('Error de conexión:', err);
   }

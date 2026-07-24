@@ -34,9 +34,9 @@ export async function checkActiveCanchaReservation() {
     ];
 
     try {
-        // Filtramos explícitamente por tipo = 'cancha'
+        // Filtramos por tipo = 'cancha' y estado = 'Aprobado', o estado = 'Bloqueado' con luz habilitada
         const [rows] = await pool.query(
-            "SELECT fecha, hora FROM reservas WHERE fecha IN (?, ?, ?) AND estado = 'Aprobado' AND tipo = 'cancha'",
+            "SELECT fecha, hora FROM reservas WHERE fecha IN (?, ?, ?) AND tipo = 'cancha' AND (estado = 'Aprobado' OR (estado = 'Bloqueado' AND con_luz = 1))",
             datesToQuery
         );
 
@@ -66,7 +66,7 @@ export async function checkActiveCanchaReservation() {
             const reservationStartMs = utcStartMs + (3 * 60 * 60 * 1000); 
 
             const startWindowMs = reservationStartMs - (5 * 60 * 1000); // 5 minutes buffer before start
-            const endWindowMs = reservationStartMs + (60 * 60 * 1000); // 60 minutes booking duration (1 hour)
+            const endWindowMs = reservationStartMs + (60 * 60 * 1000) + (10 * 60 * 1000); // 60 minutes duration + 10 minutes buffer after end
 
             if (nowMs >= startWindowMs && nowMs < endWindowMs) {
                 return true;

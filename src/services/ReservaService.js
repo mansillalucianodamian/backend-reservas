@@ -169,7 +169,7 @@ class ReservaService {
 
 
     static async bloquear(data) {
-        const { fecha, hora, motivo, tipo = 'cancha' } = data;
+        const { fecha, hora, motivo, tipo = 'cancha', con_luz = false } = data;
 
         if (!fecha || !hora) {
             throw new ServerError(400, 'Faltan datos obligatorios: fecha y hora');
@@ -202,7 +202,8 @@ class ReservaService {
 
                 await ReservaRepository.updateById(reservaExistente.id, {
                     estado: 'Bloqueado',
-                    motivo: motivo || 'Bloqueo de horario'
+                    motivo: motivo || 'Bloqueo de horario',
+                    con_luz: con_luz ? 1 : 0
                 });
 
                 if (estadoAnterior === 'Pendiente' || estadoAnterior === 'Aprobado') {
@@ -215,7 +216,7 @@ class ReservaService {
                     );
                 }
 
-                resultados.push({ ...reservaExistente, estado: 'Bloqueado', motivo: motivo || 'Bloqueo de horario' });
+                resultados.push({ ...reservaExistente, estado: 'Bloqueado', motivo: motivo || 'Bloqueo de horario', con_luz: con_luz ? 1 : 0 });
             } else {
                 const nuevaReservaBloqueada = await ReservaRepository.create({
                     usuario_id: null,
@@ -223,7 +224,8 @@ class ReservaService {
                     fecha,
                     hora: h,
                     motivo: motivo || 'Bloqueo de horario',
-                    estado: 'Bloqueado'
+                    estado: 'Bloqueado',
+                    con_luz: con_luz ? 1 : 0
                 });
                 resultados.push(nuevaReservaBloqueada);
             }

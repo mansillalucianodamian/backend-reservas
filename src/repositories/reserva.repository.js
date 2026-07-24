@@ -21,7 +21,8 @@ class ReservaRepository {
                 fecha: r.fecha,
                 hora: r.hora.trim().substring(0, 5), // "08:00:00" → "08:00"
                 estado: r.estado,
-                con_aire: r.con_aire
+                con_aire: r.con_aire,
+                con_luz: r.con_luz
             }));
             return mapped[0];
         } catch (error) {
@@ -32,12 +33,12 @@ class ReservaRepository {
 
 
     static async create(reserva) {
-        const { usuario_id, fecha, hora, estado, motivo, tipo = 'cancha', con_aire = 0 } = reserva;
+        const { usuario_id, fecha, hora, estado, motivo, tipo = 'cancha', con_aire = 0, con_luz = 0 } = reserva;
         try {
             // Si viene motivo (bloqueo), lo insertamos; si no, lo dejamos en NULL
             const [result] = await pool.query(
-                'INSERT INTO reservas (usuario_id, tipo, fecha, hora, estado, motivo, con_aire) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [usuario_id, tipo, fecha, hora, estado, motivo || null, con_aire ? 1 : 0]
+                'INSERT INTO reservas (usuario_id, tipo, fecha, hora, estado, motivo, con_aire, con_luz) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [usuario_id, tipo, fecha, hora, estado, motivo || null, con_aire ? 1 : 0, con_luz ? 1 : 0]
             );
 
             return {
@@ -48,7 +49,8 @@ class ReservaRepository {
                 hora,
                 estado,
                 motivo: motivo || null,
-                con_aire: con_aire ? 1 : 0
+                con_aire: con_aire ? 1 : 0,
+                con_luz: con_luz ? 1 : 0
             };
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo crear la reserva', error);
@@ -67,6 +69,7 @@ class ReservaRepository {
         r.usuario_id,
         r.motivo,
         r.con_aire,
+        r.con_luz,
         CONCAT(u.apellido, ', ', u.nombre) AS usuario
       FROM reservas r
       LEFT JOIN usuarios u ON r.usuario_id = u.id
