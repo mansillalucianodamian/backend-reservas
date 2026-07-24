@@ -78,6 +78,10 @@ class UserRepository {
 
     static async deleteById(user_id) {
         try {
+            // Primero eliminar todas las reservas asociadas a este usuario
+            await pool.query('DELETE FROM reservas WHERE usuario_id = ?', [user_id]);
+
+            // Luego eliminar el usuario
             const [result] = await pool.query('DELETE FROM usuarios WHERE id = ?', [user_id]);
             return result.affectedRows > 0;
         } catch (error) {
