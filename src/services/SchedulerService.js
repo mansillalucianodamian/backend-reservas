@@ -1,5 +1,5 @@
 import { pool } from '../config/db.js';
-import { encenderLuz, apagarLuz, encenderAireQuincho, apagarAireQuincho } from './ShellyService.js';
+import { encenderLuz, apagarLuz, encenderAireQuincho, apagarAireQuincho, getLuzStatus, getAireQuinchoStatus } from './ShellyService.js';
 
 let intervalId = null;
 
@@ -197,30 +197,74 @@ async function sincronizarLuces() {
     try {
         const deberiaEncenderCancha = await checkActiveCanchaReservation();
         console.log(`[LIGHT SYNC] Cancha check executed. Active? ${deberiaEncenderCancha ? 'YES' : 'NO'}`);
+        
+        let status = null;
+        try {
+            status = await getLuzStatus();
+            console.log(`[LIGHT SYNC] Cancha status: output=${status.output}, source=${status.source}`);
+        } catch (err) {
+            console.warn(`[LIGHT SYNC] No se pudo obtener el estado del Shelly de la cancha: ${err.message}. Se procederá con el comando directo.`);
+        }
+
         if (deberiaEncenderCancha) {
-            await encenderLuz();
-            console.log("[LIGHT SYNC] Cancha Shelly ON command sent successfully.");
+            if (!status || status.output === false) {
+                await encenderLuz();
+                console.log("[LIGHT SYNC] Cancha Shelly ON command sent successfully.");
+            } else {
+                console.log("[LIGHT SYNC] Cancha Shelly ya está ENCENDIDO. Omitiendo comando.");
+            }
         } else {
-            await apagarLuz();
-            console.log("[LIGHT SYNC] Cancha Shelly OFF command sent successfully.");
+            // No hay reserva activa
+            if (!status || status.output === true) {
+                if (status && (status.source === 'input' || status.source === 'switch')) {
+                    console.log("[LIGHT SYNC] Cancha Shelly encendido MANUALMENTE (físico). Conservando encendido para mantenimiento.");
+                } else {
+                    await apagarLuz();
+                    console.log("[LIGHT SYNC] Cancha Shelly OFF command sent successfully.");
+                }
+            } else {
+                console.log("[LIGHT SYNC] Cancha Shelly ya está APAGADO. Omitiendo comando.");
+            }
         }
     } catch (error) {
-        console.error("[LIGHT SYNC] Error sending command to Cancha Shelly:", error.message);
+        console.error("[LIGHT SYNC] Error en la sincronización de luces:", error.message);
     }
 
     // 2. Sincronizar Aire Quincho (New Shelly)
     try {
         const deberiaEncenderQuincho = await checkActiveQuinchoAireReservation();
         console.log(`[QUINCHO AC SYNC] Quincho check executed. Active? ${deberiaEncenderQuincho ? 'YES' : 'NO'}`);
+        
+        let status = null;
+        try {
+            status = await getAireQuinchoStatus();
+            console.log(`[QUINCHO AC SYNC] Quincho status: output=${status.output}, source=${status.source}`);
+        } catch (err) {
+            console.warn(`[QUINCHO AC SYNC] No se pudo obtener el estado del Shelly del quincho: ${err.message}. Se procederá con el comando directo.`);
+        }
+
         if (deberiaEncenderQuincho) {
-            await encenderAireQuincho();
-            console.log("[QUINCHO AC SYNC] Quincho Shelly ON command sent successfully.");
+            if (!status || status.output === false) {
+                await encenderAireQuincho();
+                console.log("[QUINCHO AC SYNC] Quincho Shelly ON command sent successfully.");
+            } else {
+                console.log("[QUINCHO AC SYNC] Quincho Shelly ya está ENCENDIDO. Omitiendo comando.");
+            }
         } else {
-            await apagarAireQuincho();
-            console.log("[QUINCHO AC SYNC] Quincho Shelly OFF command sent successfully.");
+            // No hay reserva activa con aire
+            if (!status || status.output === true) {
+                if (status && (status.source === 'input' || status.source === 'switch')) {
+                    console.log("[QUINCHO AC SYNC] Quincho Shelly encendido MANUALMENTE (físico). Conservando encendido.");
+                } else {
+                    await apagarAireQuincho();
+                    console.log("[QUINCHO AC SYNC] Quincho Shelly OFF command sent successfully.");
+                }
+            } else {
+                console.log("[QUINCHO AC SYNC] Quincho Shelly ya está APAGADO. Omitiendo comando.");
+            }
         }
     } catch (error) {
-        console.error("[QUINCHO AC SYNC] Error sending command to Quincho Shelly:", error.message);
+        console.error("[QUINCHO AC SYNC] Error en la sincronización del aire del quincho:", error.message);
     }
 }
 
