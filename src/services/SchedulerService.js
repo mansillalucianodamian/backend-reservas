@@ -215,8 +215,10 @@ async function sincronizarLuces() {
             }
         } else {
             // No hay reserva activa
-            if (!status || status.output === true) {
-                if (status && status.source !== 'SHC' && status.source !== 'http') {
+            if (!status) {
+                console.log("[LIGHT SYNC] No se pudo obtener el estado del Shelly de la cancha. Omitiendo apagado automático para evitar cortes accidentales.");
+            } else if (status.output === true) {
+                if (status.source !== 'SHC' && status.source !== 'http') {
                     console.log("[LIGHT SYNC] Cancha Shelly encendido MANUALMENTE (físico/app/externo). Conservando encendido.");
                 } else {
                     await apagarLuz();
@@ -252,8 +254,10 @@ async function sincronizarLuces() {
             }
         } else {
             // No hay reserva activa con aire
-            if (!status || status.output === true) {
-                if (status && status.source !== 'SHC' && status.source !== 'http') {
+            if (!status) {
+                console.log("[QUINCHO AC SYNC] No se pudo obtener el estado del Shelly del quincho. Omitiendo apagado automático.");
+            } else if (status.output === true) {
+                if (status.source !== 'SHC' && status.source !== 'http') {
                     console.log("[QUINCHO AC SYNC] Quincho Shelly encendido MANUALMENTE (físico/app/externo). Conservando encendido.");
                 } else {
                     await apagarAireQuincho();
