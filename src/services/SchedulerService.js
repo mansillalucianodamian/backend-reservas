@@ -97,6 +97,17 @@ export async function checkActiveCanchaReservation() {
  * @returns {Promise<boolean>}
  */
 export async function checkActiveQuinchoAireReservation() {
+    try {
+        const overrideMode = await ConfigRepository.getByKey('override_aire_quincho');
+        if (overrideMode === 'ON') {
+            return true;
+        } else if (overrideMode === 'OFF') {
+            return false;
+        }
+    } catch (err) {
+        console.error("[QUINCHO SYNC SERVICE] Error checking override_aire_quincho:", err);
+    }
+
     const now = new Date();
     
     // Convert current time to Argentina timezone (GMT-3)

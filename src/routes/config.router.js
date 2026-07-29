@@ -10,7 +10,7 @@ configRouter.put('/precio', authMiddleware, roleMiddleware('recepcionista', 'sup
 configRouter.get('/precio-quincho', ConfigController.getPrecioQuincho);
 configRouter.put('/precio-quincho', authMiddleware, roleMiddleware('recepcionista', 'super_admin'), ConfigController.updatePrecioQuincho);
 
-configRouter.get('/luces', authMiddleware, roleMiddleware('recepcionista', 'super_admin'), ConfigController.getLucesStatus);
-configRouter.put('/luces', authMiddleware, roleMiddleware('recepcionista', 'super_admin'), ConfigController.updateLucesMode);
+configRouter.get('/dispositivo/:tipo', authMiddleware, roleMiddleware('recepcionista', 'super_admin'), ConfigController.getLucesStatus);
+configRouter.put('/dispositivo/:tipo', authMiddleware, roleMiddleware('recepcionista', 'super_admin'), ConfigController.updateLucesMode);
 
 export default configRouter;
