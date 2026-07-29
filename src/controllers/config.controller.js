@@ -1,4 +1,5 @@
 import ConfigRepository from "../repositories/config.repository.js";
+import { getLuzStatus, encenderLuz, apagarLuz } from "../services/ShellyService.js";
 
 class ConfigController {
     static async getPrecioCancha(req, res) {
@@ -59,6 +60,55 @@ class ConfigController {
         } catch (error) {
             console.error('ERROR AL ACTUALIZAR CONFIG QUINCHO', error);
             return res.status(500).json({ ok: false, message: 'Error al actualizar las tarifas del quincho' });
+        }
+    }
+
+    static async getLucesStatus(req, res) {
+        try {
+            const mode = await ConfigRepository.getByKey('override_luces_cancha') || 'AUTO';
+            
+            let output = false;
+            try {
+                const status = await getLuzStatus();
+                output = status.output;
+            } catch (err) {
+                console.warn('[CONFIG CONTROLLER] No se pudo obtener el estado real del Shelly:', err.message);
+            }
+
+            return res.json({ ok: true, output, mode });
+        } catch (error) {
+            console.error('ERROR AL OBTENER ESTADO DE LUCES', error);
+            return res.status(500).json({ ok: false, message: 'Error al obtener el estado de las luces' });
+        }
+    }
+
+    static async updateLucesMode(req, res) {
+        try {
+            const { mode } = req.body;
+            if (!['ON', 'OFF', 'AUTO'].includes(mode)) {
+                return res.status(400).json({ ok: false, message: 'El modo de luces debe ser ON, OFF o AUTO' });
+            }
+
+            await ConfigRepository.setByKey('override_luces_cancha', mode);
+
+            if (mode === 'ON') {
+                try {
+                    await encenderLuz();
+                } catch (err) {
+                    console.error('[CONFIG CONTROLLER] Error al encender luz:', err.message);
+                }
+            } else if (mode === 'OFF') {
+                try {
+                    await apagarLuz();
+                } catch (err) {
+                    console.error('[CONFIG CONTROLLER] Error al apagar luz:', err.message);
+                }
+            }
+
+            return res.json({ ok: true, message: `Modo de luces actualizado a ${mode}` });
+        } catch (error) {
+            console.error('ERROR AL ACTUALIZAR MODO DE LUCES', error);
+            return res.status(500).json({ ok: false, message: 'Error al actualizar el modo de las luces' });
         }
     }
 }

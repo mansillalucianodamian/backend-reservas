@@ -1,5 +1,6 @@
 import { pool } from '../config/db.js';
 import { encenderLuz, apagarLuz, encenderAireQuincho, apagarAireQuincho, getLuzStatus, getAireQuinchoStatus } from './ShellyService.js';
+import ConfigRepository from '../repositories/config.repository.js';
 
 let intervalId = null;
 
@@ -9,6 +10,17 @@ let intervalId = null;
  * @returns {Promise<boolean>}
  */
 export async function checkActiveCanchaReservation() {
+    try {
+        const overrideMode = await ConfigRepository.getByKey('override_luces_cancha');
+        if (overrideMode === 'ON') {
+            return true;
+        } else if (overrideMode === 'OFF') {
+            return false;
+        }
+    } catch (err) {
+        console.error("[LIGHT SYNC SERVICE] Error checking override_luces_cancha:", err);
+    }
+
     const now = new Date();
     
     // Convert current time to Argentina timezone (GMT-3)
