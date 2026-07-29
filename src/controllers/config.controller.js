@@ -103,6 +103,11 @@ class ConfigController {
 
             const dbKey = isQuincho ? 'override_aire_quincho' : 'override_luces_cancha';
             await ConfigRepository.setByKey(dbKey, mode);
+            
+            // Si el modo es forzado (ON/OFF), guardamos la marca de tiempo de activación
+            if (mode === 'ON' || mode === 'OFF') {
+                await ConfigRepository.setByKey(dbKey + '_updated_at', new Date().toISOString());
+            }
 
             if (isQuincho) {
                 if (mode === 'ON') {

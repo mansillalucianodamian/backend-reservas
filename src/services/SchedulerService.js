@@ -12,10 +12,21 @@ let intervalId = null;
 export async function checkActiveCanchaReservation() {
     try {
         const overrideMode = await ConfigRepository.getByKey('override_luces_cancha');
-        if (overrideMode === 'ON') {
-            return true;
-        } else if (overrideMode === 'OFF') {
-            return false;
+        if (overrideMode === 'ON' || overrideMode === 'OFF') {
+            const updatedAtStr = await ConfigRepository.getByKey('override_luces_cancha_updated_at');
+            if (updatedAtStr) {
+                const updatedAt = new Date(updatedAtStr);
+                const diffMs = Date.now() - updatedAt.getTime();
+                const twoHours = 2 * 60 * 60 * 1000;
+                if (diffMs > twoHours) {
+                    console.log(`[LIGHT SYNC] Override override_luces_cancha expiró (más de 2 horas). Restableciendo a AUTO.`);
+                    await ConfigRepository.setByKey('override_luces_cancha', 'AUTO');
+                } else {
+                    return overrideMode === 'ON';
+                }
+            } else {
+                return overrideMode === 'ON';
+            }
         }
     } catch (err) {
         console.error("[LIGHT SYNC SERVICE] Error checking override_luces_cancha:", err);
@@ -99,10 +110,21 @@ export async function checkActiveCanchaReservation() {
 export async function checkActiveQuinchoAireReservation() {
     try {
         const overrideMode = await ConfigRepository.getByKey('override_aire_quincho');
-        if (overrideMode === 'ON') {
-            return true;
-        } else if (overrideMode === 'OFF') {
-            return false;
+        if (overrideMode === 'ON' || overrideMode === 'OFF') {
+            const updatedAtStr = await ConfigRepository.getByKey('override_aire_quincho_updated_at');
+            if (updatedAtStr) {
+                const updatedAt = new Date(updatedAtStr);
+                const diffMs = Date.now() - updatedAt.getTime();
+                const twoHours = 2 * 60 * 60 * 1000;
+                if (diffMs > twoHours) {
+                    console.log(`[QUINCHO SYNC] Override override_aire_quincho expiró (más de 2 horas). Restableciendo a AUTO.`);
+                    await ConfigRepository.setByKey('override_aire_quincho', 'AUTO');
+                } else {
+                    return overrideMode === 'ON';
+                }
+            } else {
+                return overrideMode === 'ON';
+            }
         }
     } catch (err) {
         console.error("[QUINCHO SYNC SERVICE] Error checking override_aire_quincho:", err);
