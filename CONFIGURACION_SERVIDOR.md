@@ -49,7 +49,7 @@ ssh -L 8080:127.0.0.1:8080 administrador@45.7.251.99 -p 9422
 
 ## 4. Configuración del Servidor Web (Nginx)
 
-Nginx actúa como proxy inverso. Escucha en el puerto `80` de las IPs autorizadas y envía las peticiones al backend en `http://127.0.0.1:8080`.
+Nginx actúa como servidor de archivos estáticos para el frontend y como proxy inverso para el backend. Escucha en el puerto `80` de las IPs autorizadas, sirve el frontend compilado y envía las peticiones `/api` al backend en `http://127.0.0.1:8080`.
 
 * **Archivo de configuración**: `/etc/nginx/sites-available/reservas.conf`
 * **Enlace activo**: `/etc/nginx/sites-enabled/reservas.conf`
@@ -57,11 +57,19 @@ Nginx actúa como proxy inverso. Escucha en el puerto `80` de las IPs autorizada
 ### Bloque de configuración actual:
 ```nginx
 server {
-    listen 80;
+    listen 80 default_server;
+    listen [::]:80 default_server;
 
-    server_name 45.7.251.99 192.168.0.215;
+    server_name _;
+
+    root /var/www/frontend/browser;
+    index index.html;
 
     location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
         proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -71,6 +79,17 @@ server {
     }
 }
 ```
+
+> [!WARNING]
+> **CONFIGURACIÓN CRÍTICA DEL FRONTEND (`base-href`)**
+> Dado que Nginx sirve la aplicación desde la raíz (`/var/www/frontend/browser` mapeado a `location /`), el frontend **debe ser compilado obligatoriamente con el base href en la raíz `/`**.
+>
+> * **Comando de compilación correcto**:
+>   ```bash
+>   ng build --base-href=/
+>   ```
+> * **¿Por qué?** Si se compila usando `--base-href=/reservas/`, el navegador intentará descargar los archivos `.js` y `.css` desde la ruta `/reservas/archivo.js`. Como esa carpeta no existe, Nginx retornará el archivo `index.html` (HTML) con status 200/304, lo que provoca un error de sintaxis en el navegador (`Uncaught SyntaxError: Unexpected token '<'`) y deja la pantalla completamente en blanco.
+> * **Verificación**: Comprobar siempre que en el archivo `/var/www/frontend/browser/index.html` en producción figure la etiqueta `<base href="/">` y **NO** `<base href="/reservas/">`.
 
 ### Comandos útiles para Nginx:
 ```bash
