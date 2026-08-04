@@ -63,6 +63,13 @@ reservasRouter.post(
     ReservaController.bloquear
 );
 
+reservasRouter.post(
+    "/bloquear-masivo",
+    authMiddleware,
+    roleMiddleware('super_admin'),
+    ReservaController.bloquearMasivo
+);
+
 // 🔹 NUEVO: Horarios disponibles
 reservasRouter.get(
     "/disponibles/:fecha",

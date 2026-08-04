@@ -263,6 +263,59 @@ class ReservaService {
     static async getPendientes() {
         return await ReservaRepository.getPendientes();
     }
+
+    static async bloquearMasivo(data) {
+        const { fechaInicio, fechaFin, diasSemana, horas, motivo, con_luz = false } = data;
+
+        if (!fechaInicio || !fechaFin || !diasSemana || !horas || !Array.isArray(diasSemana) || !Array.isArray(horas)) {
+            throw new ServerError(400, 'Faltan parámetros obligatorios o formato inválido');
+        }
+
+        const [startYear, startMonth, startDay] = fechaInicio.split('-').map(Number);
+        const [endYear, endMonth, endDay] = fechaFin.split('-').map(Number);
+
+        let current = new Date(startYear, startMonth - 1, startDay);
+        const end = new Date(endYear, endMonth - 1, endDay);
+
+        const fechasABloquear = [];
+        while (current <= end) {
+            const dayOfWeek = current.getDay(); // 0 = Sunday, 1 = Monday, 2 = Tuesday, etc.
+            if (diasSemana.includes(dayOfWeek)) {
+                const yyyy = current.getFullYear();
+                const mm = String(current.getMonth() + 1).padStart(2, '0');
+                const dd = String(current.getDate()).padStart(2, '0');
+                fechasABloquear.push(`${yyyy}-${mm}-${dd}`);
+            }
+            current.setDate(current.getDate() + 1);
+        }
+
+        let totalBloqueados = 0;
+        const detalles = [];
+
+        for (const fecha of fechasABloquear) {
+            const blockResult = await ReservaService.bloquear({
+                fecha,
+                hora: horas,
+                motivo: motivo || 'Bloqueo de horario masivo',
+                tipo: 'cancha',
+                con_luz
+            });
+
+            if (Array.isArray(blockResult)) {
+                totalBloqueados += blockResult.length;
+                detalles.push(...blockResult);
+            } else if (blockResult) {
+                totalBloqueados += 1;
+                detalles.push(blockResult);
+            }
+        }
+
+        return {
+            totalBloqueados,
+            fechasAfectadas: fechasABloquear,
+            detalles
+        };
+    }
 }
 
 export default ReservaService;

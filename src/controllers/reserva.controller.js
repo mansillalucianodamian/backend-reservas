@@ -147,6 +147,18 @@ class ReservaController {
         }
     }
 
+    static async bloquearMasivo(req, res) {
+        try {
+            const result = await ReservaService.bloquearMasivo({ ...req.body, tipo: 'cancha' });
+            res.status(201).json({ ok: true, resultado: result });
+        } catch (error) {
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || "Error al realizar el bloqueo masivo"
+            });
+        }
+    }
+
     static async getDisponibles(req, res) {
         try {
             const { fecha } = req.params;
