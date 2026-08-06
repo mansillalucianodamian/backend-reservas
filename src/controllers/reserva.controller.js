@@ -58,6 +58,7 @@ class ReservaController {
                 hora,
                 tipo,
                 usuario_id: userId,
+                usuario_rol: req.user.rol,
                 motivo,
                 con_aire: con_aire ? 1 : 0
             });

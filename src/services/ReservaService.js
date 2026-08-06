@@ -19,14 +19,14 @@ class ReservaService {
     }
 
     static async create(data) {
-        const { usuario_id, fecha, hora, tipo = 'cancha', motivo, con_aire = 0 } = data;
+        const { usuario_id, usuario_rol, fecha, hora, tipo = 'cancha', motivo, con_aire = 0 } = data;
 
         if (!usuario_id || !fecha || !hora) {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
         }
 
-        // 1. Si es cancha, verificar límite semanal de 2 turnos
-        if (tipo === 'cancha') {
+        // 1. Si es cancha, verificar límite semanal de 2 turnos (excluyendo a super_admin y recepcionista)
+        if (tipo === 'cancha' && usuario_rol !== 'super_admin' && usuario_rol !== 'recepcionista') {
             const fechaObj = new Date(fecha);
             const inicioSemana = new Date(fechaObj);
             inicioSemana.setDate(fechaObj.getDate() - fechaObj.getDay());

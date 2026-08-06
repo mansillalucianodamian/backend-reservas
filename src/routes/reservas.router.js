@@ -23,7 +23,7 @@ reservasRouter.get("/:id", authMiddleware, ReservaController.getById);
 reservasRouter.post(
     "/",
     authMiddleware,
-    roleMiddleware('usuario'),
+    roleMiddleware('usuario', 'recepcionista', 'super_admin'),
     ReservaController.create
 );
 
