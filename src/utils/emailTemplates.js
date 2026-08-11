@@ -272,7 +272,7 @@ export const getReservationCancellationEmailHtml = (nombre, { fecha, hora, motiv
       <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, te informamos sobre un cambio importante en tu reserva.</p>
     </div>
 
-    <p style="color: #4b5563;">${isQuincho ? 'La reserva que tenías agendada para el Quincho Municipal ha sido cancelada por la administración.' : 'El turno que tenías agendado para jugar al pádel ha sido cancelado por la administración.'}</p>
+    <p style="color: #4b5563;">${isQuincho ? 'La reserva que tenías agendada para el Quincho Municipal ha sido cancelada.' : 'El turno que tenías agendado para jugar al pádel ha sido cancelado.'}</p>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
       ${isQuincho ? `

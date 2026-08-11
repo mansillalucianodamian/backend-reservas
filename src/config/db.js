@@ -27,14 +27,23 @@ export const pool = mysql.createPool({
 // Asegurar columnas en la base de datos
 (async () => {
   try {
-    const [columns] = await pool.query("SHOW COLUMNS FROM reservas LIKE 'con_luz'");
-    if (columns.length === 0) {
+    // Verificar columna con_luz
+    const [columnsLuz] = await pool.query("SHOW COLUMNS FROM reservas LIKE 'con_luz'");
+    if (columnsLuz.length === 0) {
       console.log("ℹ️ Agregando columna con_luz a la tabla reservas...");
       await pool.query("ALTER TABLE reservas ADD COLUMN con_luz TINYINT(1) DEFAULT 0");
       console.log("✅ Columna con_luz agregada con éxito.");
     }
+
+    // Verificar columna created_at
+    const [columnsCreatedAt] = await pool.query("SHOW COLUMNS FROM reservas LIKE 'created_at'");
+    if (columnsCreatedAt.length === 0) {
+      console.log("ℹ️ Agregando columna created_at a la tabla reservas...");
+      await pool.query("ALTER TABLE reservas ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+      console.log("✅ Columna created_at agregada con éxito.");
+    }
   } catch (err) {
-    console.error("⚠️ Error al verificar/crear la columna con_luz:", err.message);
+    console.error("⚠️ Error al verificar/crear columnas en la tabla reservas:", err.message);
   }
 })();
 

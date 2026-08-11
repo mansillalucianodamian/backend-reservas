@@ -80,12 +80,14 @@ class ReservaService {
             precio = precioCancha;
         }
 
+        const plazoDias = tipo === 'cancha' ? 2 : 3;
+
         await NotificationService.enviarConfirmacionReserva(
             usuario_id,
             nuevaReserva,
             1,
             precio,
-            3 // plazo de pago en días
+            plazoDias
         );
 
         return nuevaReserva;

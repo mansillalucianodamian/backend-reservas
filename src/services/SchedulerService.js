@@ -1,6 +1,7 @@
 import { pool } from '../config/db.js';
 import { encenderLuz, apagarLuz, encenderAireQuincho, apagarAireQuincho, getLuzStatus, getAireQuinchoStatus } from './ShellyService.js';
 import ConfigRepository from '../repositories/config.repository.js';
+import NotificationService from './NotificationService.js';
 
 let intervalId = null;
 
@@ -238,6 +239,9 @@ export function iniciarSincronizadorLuces() {
  * Queries database status and sets Shelly relay states accordingly.
  */
 async function sincronizarLuces() {
+    // 0. Procesar cancelaciones automáticas de reservas de cancha expiradas
+    await procesarCancelacionesAutomaticas();
+
     // 1. Sincronizar Luces Cancha (Existing Shelly)
     try {
         const deberiaEncenderCancha = await checkActiveCanchaReservation();
@@ -322,4 +326,56 @@ async function sincronizarLuces() {
  */
 export function programarReserva(reserva) {
     console.log(`[SCHEDULER] Reservation approved for ID ${reserva?.id}. Auto-sync loop will capture it on next tick.`);
+}
+
+/**
+ * Busca reservas de tipo 'cancha' en estado 'Pendiente' con más de 48 horas de antigüedad
+ * y las cambia a estado 'Cancelado', liberando el horario y notificando al usuario.
+ */
+export async function procesarCancelacionesAutomaticas() {
+    try {
+        console.log("[AUTO-CANCEL] Ejecutando control de reservas expiradas (48 hs)...");
+        // Buscamos reservas de cancha pendientes creadas hace más de 48 horas
+        const query = `
+            SELECT r.*, u.nombre, u.email 
+            FROM reservas r
+            JOIN usuarios u ON r.usuario_id = u.id
+            WHERE r.tipo = 'cancha' 
+              AND r.estado = 'Pendiente' 
+              AND r.created_at < NOW() - INTERVAL 48 HOUR
+        `;
+        const [reservasExpiradas] = await pool.query(query);
+        
+        if (!reservasExpiradas || reservasExpiradas.length === 0) {
+            console.log("[AUTO-CANCEL] No se detectaron reservas de cancha expiradas.");
+            return;
+        }
+        
+        console.log(`[AUTO-CANCEL] Se encontraron ${reservasExpiradas.length} reservas de cancha expiradas.`);
+        
+        for (const r of reservasExpiradas) {
+            // Actualizar estado a 'Cancelado'
+            await pool.query(
+                "UPDATE reservas SET estado = 'Cancelado' WHERE id = ?",
+                [r.id]
+            );
+            console.log(`[AUTO-CANCEL] Reserva ID ${r.id} cancelada por falta de pago.`);
+            
+            // Enviar notificación de cancelación por falta de pago
+            try {
+                await NotificationService.enviarAdvertencia(
+                    r.usuario_id,
+                    "Expiración del plazo de pago de 48 horas (reserva cancelada automáticamente)",
+                    r.fecha,
+                    r.hora,
+                    r.tipo
+                );
+                console.log(`[AUTO-CANCEL] Correo de cancelación enviado con éxito al usuario de la reserva ID ${r.id}.`);
+            } catch (notiErr) {
+                console.error(`[AUTO-CANCEL] Error al notificar cancelación de reserva ID ${r.id}:`, notiErr);
+            }
+        }
+    } catch (error) {
+        console.error("[AUTO-CANCEL] Error general en el proceso de cancelación automática:", error);
+    }
 }
