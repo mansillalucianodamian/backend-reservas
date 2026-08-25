@@ -167,10 +167,21 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
     `;
   }
   
+  const reservaDate = new Date(fecha + 'T12:00:00');
+  const hoy = new Date();
+  const isFutureMonth = (reservaDate.getFullYear() > hoy.getFullYear()) || 
+                        (reservaDate.getFullYear() === hoy.getFullYear() && reservaDate.getMonth() > hoy.getMonth());
+  
+  const nombresMeses = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  const mesNombre = nombresMeses[reservaDate.getMonth()];
+
   const content = isQuincho ? `
     <div style="text-align: center; margin-bottom: 24px;">
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho registrada!</h2>
-      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva para el Quincho Municipal.</p>
+      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva para el Quincho Municipal. Recordá que para confirmarla totalmente es necesario realizar el pago.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
@@ -189,23 +200,34 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
       ${acRow}
       <tr>
         <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a;">Tarifa de uso:</td>
-        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a; font-size: 17px;">$${total} <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Se abona en la Municipalidad)</span></td>
+        <td style="padding: 16px 20px; font-weight: 700; color: #1e3a8a; font-size: 17px;">$${total} ${isFutureMonth ? '<span style="font-size: 13px; font-weight: normal; color: #b45309;">(Estimado, sujeto a variación)</span>' : ''}</td>
       </tr>
     </table>
 
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 6px; margin: 24px 0; font-size: 14px;">
       <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 15px; font-weight: 600;">
-        Información Importante sobre Pago e Ingreso
+        Información Importante sobre Pago de Reserva
       </h3>
-      <p style="margin: 0 0 12px 0; color: #1e40af;">Te recordamos que la tarifa del quincho se abona <strong>posteriormente al uso</strong> (o al momento de coordinar el retiro de llaves en la Municipalidad).</p>
+      ${isFutureMonth ? `
+        <p style="margin: 0 0 12px 0; color: #b45309; font-weight: 600;">
+          ⚠️ ATENCIÓN: Al tratarse de un evento para un mes futuro, el costo está sujeto a modificaciones según el decreto reglamentario municipal vigente a la fecha del evento. 
+          El pago deberá realizarse obligatoriamente durante el mes de <strong>${mesNombre} (no antes)</strong>, abonando el valor actualizado.
+        </p>
+      ` : `
+        <p style="margin: 0 0 12px 0; color: #1e40af;">Tienes un plazo de <strong>${plazoDias} días</strong> para abonar la reserva. De lo contrario, se cancelará automáticamente al finalizar dicho período.</p>
+      `}
       
-      <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 500;">Puntos de atención e información:</p>
+      <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 500;">Opciones de pago disponibles:</p>
       <ul style="margin: 0; padding-left: 20px; color: #1e40af; line-height: 1.6;">
-        <li style="margin-bottom: 8px;">
-          <strong>Atención Presencial y Retiro de Llaves:</strong> Acércate a las ventanillas de la Municipalidad de <strong>7:00 a 12:00 hs</strong>.
+        <li style="margin-bottom: 12px;">
+          <strong>Transferencia Bancaria:</strong><br>
+          Titular: <code>MUNICIP DE ALDEA SAN ANTONIO</code><br>
+          CBU: <code>3860046101000000015731</code><br>
+          Alias: <code>libredisponibilidad</code><br>
+          <em style="display: block; margin-top: 4px;">Envía el comprobante de pago por mensaje de WhatsApp al <a href="https://wa.me/5493446503291" style="color: #1d4ed8; text-decoration: underline; font-weight: 600;">3446-503291</a> (los comprobantes se reciben de <strong>7:00 a 13:00 hs</strong>).</em>
         </li>
         <li>
-          <strong>Consultas por WhatsApp:</strong> Podés enviar un mensaje al <a href="https://wa.me/5493446503291" style="color: #1d4ed8; text-decoration: underline; font-weight: 600;">3446-503291</a> (atención de 7:00 a 13:00 hs).
+          <strong>Pago Presencial:</strong> Acércate a las ventanillas de la Municipalidad de <strong>7:00 a 12:00 hs</strong>.
         </li>
       </ul>
     </div>
@@ -324,7 +346,7 @@ export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'canch
   const content = isQuincho ? `
     <div style="text-align: center; margin-bottom: 24px;">
       <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho aprobada!</h2>
-      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, tu solicitud de reserva para el Quincho Municipal ha sido aprobada.</p>
+      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, confirmamos la recepción del pago y tu reserva para el Quincho Municipal ha sido aprobada con éxito.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
@@ -344,7 +366,7 @@ export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'canch
     </table>
 
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 24px 0; font-size: 14px; color: #1e40af;">
-      <strong>Información de la reserva:</strong> Recordá acércate a la Municipalidad para coordinar el retiro de llaves y realizar el pago correspondiente. ¡Que disfrutes del espacio!
+      <strong>Retiro de Llaves:</strong> Tu pago ha sido registrado de forma correcta. Podés acercarte a la oficina de Rentas Municipal el día anterior al evento de <strong>7:00 a 12:00 hs</strong> para retirar las tres llaves (puerta del quincho, sanitarios de damas y de caballeros). ¡Que disfrutes del espacio!
     </div>
   ` : `
     <div style="text-align: center; margin-bottom: 24px;">
