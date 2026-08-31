@@ -95,9 +95,11 @@ class ReservaRepository {
     }
     static async findByUsuarioYSemana(usuario_id, inicioSemana, finSemana) {
         try {
+            const inicioStr = typeof inicioSemana === 'string' ? inicioSemana : (inicioSemana instanceof Date ? inicioSemana.toISOString().split('T')[0] : String(inicioSemana));
+            const finStr = typeof finSemana === 'string' ? finSemana : (finSemana instanceof Date ? finSemana.toISOString().split('T')[0] : String(finSemana));
             const [rows] = await pool.query(
                 'SELECT * FROM reservas WHERE usuario_id = ? AND tipo = "cancha" AND fecha BETWEEN ? AND ? AND estado NOT IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada", "Bloqueado", "Bloqueada")',
-                [usuario_id, inicioSemana.toISOString().split('T')[0], finSemana.toISOString().split('T')[0]]
+                [usuario_id, inicioStr, finStr]
             );
             return rows;
         } catch (error) {

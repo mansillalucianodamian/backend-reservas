@@ -27,13 +27,26 @@ class ReservaService {
 
         // 1. Si es cancha, verificar límite semanal de 2 turnos (excluyendo a super_admin y recepcionista)
         if (tipo === 'cancha' && usuario_rol !== 'super_admin' && usuario_rol !== 'recepcionista') {
-            const fechaObj = new Date(fecha);
-            const inicioSemana = new Date(fechaObj);
-            inicioSemana.setDate(fechaObj.getDate() - fechaObj.getDay());
-            const finSemana = new Date(inicioSemana);
-            finSemana.setDate(inicioSemana.getDate() + 6);
+            const cleanFecha = typeof fecha === 'string' ? fecha.split('T')[0] : fecha;
+            const partes = cleanFecha.split('-').map(Number);
+            const fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+            const diaSemana = fechaObj.getDay(); // 0 = Domingo
+            const diffInicio = fechaObj.getDate() - diaSemana;
 
-            const reservasSemana = await ReservaRepository.findByUsuarioYSemana(usuario_id, inicioSemana, finSemana);
+            const domingo = new Date(partes[0], partes[1] - 1, diffInicio);
+            const sabado = new Date(partes[0], partes[1] - 1, diffInicio + 6);
+
+            const formatYMD = (d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const dia = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${dia}`;
+            };
+
+            const inicioStr = formatYMD(domingo);
+            const finStr = formatYMD(sabado);
+
+            const reservasSemana = await ReservaRepository.findByUsuarioYSemana(usuario_id, inicioStr, finStr);
             if (reservasSemana.length >= 2) {
                 throw new ServerError(400, 'Ya tienes el máximo de 2 reservas de cancha para esta semana');
             }
