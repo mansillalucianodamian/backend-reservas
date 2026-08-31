@@ -25,16 +25,17 @@ class ReservaService {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
         }
 
-        // 1. Si es cancha, verificar límite semanal de 2 turnos (excluyendo a super_admin y recepcionista)
+        // 1. Si es cancha, verificar límite semanal (excluyendo a super_admin y recepcionista)
         if (tipo === 'cancha' && usuario_rol !== 'super_admin' && usuario_rol !== 'recepcionista') {
             const cleanFecha = typeof fecha === 'string' ? fecha.split('T')[0] : fecha;
             const partes = cleanFecha.split('-').map(Number);
             const fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
-            const diaSemana = fechaObj.getDay(); // 0 = Domingo
-            const diffInicio = fechaObj.getDate() - diaSemana;
+            const diaSemana = fechaObj.getDay(); // 0: Domingo, 1: Lunes, ..., 6: Sábado
+            // Calcular Lunes de esa semana
+            const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
 
-            const domingo = new Date(partes[0], partes[1] - 1, diffInicio);
-            const sabado = new Date(partes[0], partes[1] - 1, diffInicio + 6);
+            const lunes = new Date(partes[0], partes[1] - 1, partes[2] + diffLunes);
+            const domingo = new Date(partes[0], partes[1] - 1, partes[2] + diffLunes + 6);
 
             const formatYMD = (d) => {
                 const y = d.getFullYear();
@@ -43,12 +44,25 @@ class ReservaService {
                 return `${y}-${m}-${dia}`;
             };
 
-            const inicioStr = formatYMD(domingo);
-            const finStr = formatYMD(sabado);
+            const inicioStr = formatYMD(lunes);
+            const finStr = formatYMD(domingo);
+
+            // Verificar si el turno es de último momento (< 8 horas respecto al momento actual)
+            const [horaH, horaM] = (hora || '00:00').split(':').map(Number);
+            const turnoDateTime = new Date(partes[0], partes[1] - 1, partes[2], horaH || 0, horaM || 0, 0);
+            const ahora = new Date();
+            const diffHoras = (turnoDateTime.getTime() - ahora.getTime()) / (1000 * 60 * 60);
+            const esUltimoMomento = diffHoras > 0 && diffHoras < 8;
 
             const reservasSemana = await ReservaRepository.findByUsuarioYSemana(usuario_id, inicioStr, finStr);
-            if (reservasSemana.length >= 2) {
-                throw new ServerError(400, 'Ya tienes el máximo de 2 reservas de cancha para esta semana');
+            const maxPermitido = esUltimoMomento ? 3 : 2;
+
+            if (reservasSemana.length >= maxPermitido) {
+                if (maxPermitido === 2) {
+                    throw new ServerError(400, 'Ya tienes el máximo de 2 reservas de cancha para esta semana (Lunes a Domingo). Se habilita un 3er turno si faltan menos de 8 horas para el horario.');
+                } else {
+                    throw new ServerError(400, 'Ya alcanzaste el cupo máximo de 3 reservas de cancha para esta semana (incluyendo turno de último momento).');
+                }
             }
         }
 
