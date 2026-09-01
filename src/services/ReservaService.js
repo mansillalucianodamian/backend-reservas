@@ -326,6 +326,10 @@ class ReservaService {
         return await ReservaRepository.getPendientes();
     }
 
+    static async getRecientesAprobadas() {
+        return await ReservaRepository.getRecientesAprobadas();
+    }
+
     static async bloquearMasivo(data) {
         const { fechaInicio, fechaFin, diasSemana, horas, motivo, con_luz = false } = data;
 

@@ -18,6 +18,12 @@ reservasRouter.get("/pendientes",
     ReservaController.getPendientes
 );
 
+reservasRouter.get("/recientes-aprobadas", 
+    authMiddleware,
+    roleMiddleware('recepcionista', 'super_admin'),
+    ReservaController.getRecientesAprobadas
+);
+
 reservasRouter.get("/:id", authMiddleware, ReservaController.getById);
 
 reservasRouter.post(

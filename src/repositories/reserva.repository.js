@@ -241,6 +241,35 @@ class ReservaRepository {
             throw error;
         }
     }
+
+    static async getRecientesAprobadas() {
+        try {
+            const [rows] = await pool.query(`
+              SELECT 
+                r.id,
+                r.tipo,
+                r.fecha,
+                r.hora,
+                r.estado,
+                r.usuario_id,
+                r.motivo,
+                r.con_aire,
+                r.con_luz,
+                r.fecha_aprobacion,
+                CONCAT(u.apellido, ', ', u.nombre) AS usuario
+              FROM reservas r
+              LEFT JOIN usuarios u ON r.usuario_id = u.id
+              WHERE r.estado = 'Aprobado' 
+                AND r.fecha_aprobacion IS NOT NULL 
+                AND r.fecha_aprobacion >= NOW() - INTERVAL 15 MINUTE
+              ORDER BY r.fecha_aprobacion DESC
+            `);
+            return rows;
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo obtener reservas recientes aprobadas', error);
+            throw error;
+        }
+    }
 }
 
 export default ReservaRepository;

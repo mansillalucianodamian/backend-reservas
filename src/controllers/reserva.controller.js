@@ -205,6 +205,16 @@ class ReservaController {
         }
     }
 
+    static async getRecientesAprobadas(req, res) {
+        try {
+            const reservas = await ReservaService.getRecientesAprobadas();
+            res.json({ ok: true, reservas });
+        } catch (error) {
+            console.error('[SERVER ERROR]:', error);
+            res.status(500).json({ ok: false, message: 'Error al obtener aprobaciones recientes' });
+        }
+    }
+
 
 
 }
