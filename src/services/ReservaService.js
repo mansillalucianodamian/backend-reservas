@@ -4,8 +4,8 @@ import NotificationService from './NotificationService.js';
 import ConfigRepository from '../repositories/config.repository.js';
 
 class ReservaService {
-    static async getAll() {
-        return await ReservaRepository.getAll();
+    static async getAll(filters) {
+        return await ReservaRepository.getAll(filters);
     }
 
     static async getByUserId(userId) {

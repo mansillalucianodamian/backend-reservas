@@ -12,8 +12,8 @@ class ReservaController {
                 // 🔹 Usuario común: solo sus reservas
                 reservas = await ReservaService.getByUserId(req.user.id);
             } else if (req.user.rol === 'recepcionista' || req.user.rol === 'super_admin') {
-                // 🔹 Recepcionista y superadmin: todas las reservas
-                reservas = await ReservaService.getAll();
+                // 🔹 Recepcionista y superadmin: reservas filtradas según parámetros de consulta
+                reservas = await ReservaService.getAll(req.query);
             } else {
                 reservas = [];
             }

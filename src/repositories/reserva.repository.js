@@ -57,24 +57,69 @@ class ReservaRepository {
             throw error;
         }
     }
-    static async getAll() {
+    static async getAll(filters = {}) {
         try {
-            const [rows] = await pool.query(`
-      SELECT 
-        r.id,
-        r.tipo,
-        r.fecha,
-        r.hora,
-        r.estado,
-        r.usuario_id,
-        r.motivo,
-        r.con_aire,
-        r.con_luz,
-        r.fecha_aprobacion,
-        CONCAT(u.apellido, ', ', u.nombre) AS usuario
-      FROM reservas r
-      LEFT JOIN usuarios u ON r.usuario_id = u.id
-    `);
+            let sql = `
+              SELECT 
+                r.id,
+                r.tipo,
+                r.fecha,
+                r.hora,
+                r.estado,
+                r.usuario_id,
+                r.motivo,
+                r.con_aire,
+                r.con_luz,
+                r.fecha_aprobacion,
+                CONCAT(u.apellido, ', ', u.nombre) AS usuario
+              FROM reservas r
+              LEFT JOIN usuarios u ON r.usuario_id = u.id
+              WHERE 1=1
+            `;
+            const params = [];
+
+            if (filters.fecha) {
+                sql += ' AND r.fecha = ?';
+                params.push(filters.fecha);
+            }
+            if (filters.tipo && filters.tipo !== 'todos') {
+                sql += ' AND r.tipo = ?';
+                params.push(filters.tipo);
+            }
+            if (filters.estado && filters.estado !== 'todos') {
+                const estLower = filters.estado.toLowerCase();
+                if (estLower === 'aprobado' || estLower === 'aprobada') {
+                    sql += ' AND r.estado IN ("Aprobado", "Aprobada", "Confirmado", "Confirmada")';
+                } else if (estLower === 'cancelado' || estLower === 'cancelada') {
+                    sql += ' AND r.estado IN ("Cancelado", "Cancelada", "Rechazado", "Rechazada")';
+                } else if (estLower === 'pendiente') {
+                    sql += ' AND r.estado = "Pendiente"';
+                } else if (estLower === 'bloqueado' || estLower === 'bloqueada') {
+                    sql += ' AND r.estado = "Bloqueado"';
+                } else {
+                    sql += ' AND r.estado = ?';
+                    params.push(filters.estado);
+                }
+            }
+            if (filters.hora && filters.hora !== 'todos') {
+                sql += ' AND r.hora LIKE ?';
+                params.push(`${filters.hora.substring(0, 5)}%`);
+            }
+            if (filters.busqueda && filters.busqueda.trim() !== '') {
+                const q = filters.busqueda.trim();
+                const qLike = `%${q}%`;
+                sql += ' AND (u.nombre LIKE ? OR u.apellido LIKE ? OR u.dni LIKE ? OR r.motivo LIKE ? OR r.id = ?)';
+                params.push(qLike, qLike, qLike, qLike, isNaN(q) ? 0 : Number(q));
+            }
+
+            sql += ' ORDER BY r.fecha DESC, r.hora DESC';
+
+            if (filters.limit) {
+                sql += ' LIMIT ?';
+                params.push(Number(filters.limit));
+            }
+
+            const [rows] = await pool.query(sql, params);
             return rows;
         } catch (error) {
             console.error('[SERVER ERROR]: no se pudo obtener la lista de reservas', error);
