@@ -42,6 +42,14 @@ export const pool = mysql.createPool({
       await pool.query("ALTER TABLE reservas ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
       console.log("✅ Columna created_at agregada con éxito.");
     }
+
+    // Verificar columna fecha_aprobacion
+    const [columnsFechaAprobacion] = await pool.query("SHOW COLUMNS FROM reservas LIKE 'fecha_aprobacion'");
+    if (columnsFechaAprobacion.length === 0) {
+      console.log("ℹ️ Agregando columna fecha_aprobacion a la tabla reservas...");
+      await pool.query("ALTER TABLE reservas ADD COLUMN fecha_aprobacion DATETIME DEFAULT NULL");
+      console.log("✅ Columna fecha_aprobacion agregada con éxito.");
+    }
   } catch (err) {
     console.error("⚠️ Error al verificar/crear columnas en la tabla reservas:", err.message);
   }

@@ -70,6 +70,7 @@ class ReservaRepository {
         r.motivo,
         r.con_aire,
         r.con_luz,
+        r.fecha_aprobacion,
         CONCAT(u.apellido, ', ', u.nombre) AS usuario
       FROM reservas r
       LEFT JOIN usuarios u ON r.usuario_id = u.id

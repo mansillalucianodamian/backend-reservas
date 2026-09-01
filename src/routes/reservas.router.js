@@ -50,6 +50,13 @@ reservasRouter.put(
 );
 
 reservasRouter.put(
+    "/:id/deshacer-aprobacion",
+    authMiddleware,
+    roleMiddleware('recepcionista', 'super_admin'),
+    ReservaController.deshacerAprobacion
+);
+
+reservasRouter.put(
     "/:id/cancelar",
     authMiddleware,
     roleMiddleware('usuario', 'recepcionista', 'super_admin'),

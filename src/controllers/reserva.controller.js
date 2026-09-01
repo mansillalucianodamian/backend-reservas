@@ -117,6 +117,19 @@ class ReservaController {
         }
     }
 
+    static async deshacerAprobacion(req, res) {
+        try {
+            const { id } = req.params;
+            const reserva = await ReservaService.deshacerAprobacion(id, req.user);
+            res.json({ ok: true, reserva, message: "Aprobación revertida con éxito" });
+        } catch (error) {
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || "Error al deshacer aprobación de reserva"
+            });
+        }
+    }
+
     static async cancelar(req, res, next) {
         try {
             const result = await ReservaService.cancelar(req.params.id, req.user);

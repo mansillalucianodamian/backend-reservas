@@ -147,8 +147,11 @@ class ReservaService {
             throw new ServerError(400, 'Solo se pueden aprobar reservas pendientes');
         }
 
-        // Actualizar estado
-        await ReservaRepository.updateById(id, { estado: 'Aprobado' });
+        // Actualizar estado y registrar fecha de aprobación
+        await ReservaRepository.updateById(id, { 
+            estado: 'Aprobado',
+            fecha_aprobacion: new Date()
+        });
 
         // Volver a traer la reserva completa ya aprobada
         const reservaActualizada = await ReservaRepository.getById(id);
@@ -168,6 +171,36 @@ class ReservaService {
             reservaActualizada
         );
 
+        return reservaActualizada;
+    }
+
+    static async deshacerAprobacion(id, user) {
+        const reserva = await ReservaRepository.getById(id);
+        if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
+
+        if (reserva.estado !== 'Aprobado') {
+            throw new ServerError(400, 'Solo se puede deshacer la aprobación de reservas aprobadas');
+        }
+
+        // Si es recepcionista, verificar período de gracia de 15 minutos
+        if (user.rol === 'recepcionista') {
+            if (reserva.fecha_aprobacion) {
+                const fechaAprobacion = new Date(reserva.fecha_aprobacion);
+                const minutosTranscurridos = (Date.now() - fechaAprobacion.getTime()) / (1000 * 60);
+
+                if (minutosTranscurridos > 15) {
+                    throw new ServerError(403, 'El período de gracia de 15 minutos para revertir la aprobación ha expirado. Por favor, solicita asistencia al Super Administrador.');
+                }
+            }
+        }
+
+        // Revertir a estado Pendiente y resetear fecha_aprobacion
+        await ReservaRepository.updateById(id, { 
+            estado: 'Pendiente',
+            fecha_aprobacion: null 
+        });
+
+        const reservaActualizada = await ReservaRepository.getById(id);
         return reservaActualizada;
     }
 
