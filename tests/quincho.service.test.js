@@ -165,4 +165,14 @@ describe('Servicio de Quincho - Reglas de Negocio y Tarifas', () => {
             );
         });
     });
+
+    describe('Consulta de Fechas Ocupadas para Calendario', () => {
+        it('debe consultar y retornar la lista de fechas ocupadas para quincho', async () => {
+            vi.spyOn(ReservaRepository, 'getFechasOcupadas').mockResolvedValue(['2026-09-15', '2026-09-20']);
+
+            const fechas = await ReservaService.getFechasOcupadas('quincho');
+            expect(fechas).toEqual(['2026-09-15', '2026-09-20']);
+            expect(ReservaRepository.getFechasOcupadas).toHaveBeenCalledWith('quincho');
+        });
+    });
 });

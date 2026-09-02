@@ -219,6 +219,22 @@ class ReservaRepository {
             throw error;
         }
     }
+
+    static async getFechasOcupadas(tipo = 'quincho') {
+        try {
+            const [rows] = await pool.query(
+                `SELECT DISTINCT DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha 
+                 FROM reservas 
+                 WHERE tipo = ? 
+                   AND LOWER(estado) IN ('pendiente', 'aprobado', 'bloqueado')`,
+                [tipo]
+            );
+            return rows.map(r => r.fecha);
+        } catch (error) {
+            console.error('[SERVER ERROR]: no se pudo obtener fechas ocupadas para ' + tipo, error);
+            throw error;
+        }
+    }
     static async getPendientes() {
         try {
             const [rows] = await pool.query(`

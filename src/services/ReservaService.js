@@ -407,6 +407,10 @@ class ReservaService {
             detalles
         };
     }
+
+    static async getFechasOcupadas(tipo = 'quincho') {
+        return await ReservaRepository.getFechasOcupadas(tipo);
+    }
 }
 
 export default ReservaService;

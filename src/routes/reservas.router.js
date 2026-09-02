@@ -24,6 +24,9 @@ reservasRouter.get("/recientes-aprobadas",
     ReservaController.getRecientesAprobadas
 );
 
+// 🔹 Fechas ocupadas (público para visualización en calendario)
+reservasRouter.get("/fechas-ocupadas", ReservaController.getFechasOcupadas);
+
 reservasRouter.get("/:id", authMiddleware, ReservaController.getById);
 
 reservasRouter.post(

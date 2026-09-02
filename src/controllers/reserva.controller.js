@@ -215,8 +215,19 @@ class ReservaController {
         }
     }
 
-
-
+    static async getFechasOcupadas(req, res) {
+        try {
+            const { tipo = 'quincho' } = req.query;
+            const fechas = await ReservaService.getFechasOcupadas(tipo);
+            res.json({ ok: true, fechas });
+        } catch (error) {
+            console.error('[SERVER ERROR]:', error);
+            res.status(error.status || 500).json({
+                ok: false,
+                message: error.message || 'Error al obtener fechas ocupadas'
+            });
+        }
+    }
 }
 
 export default ReservaController;
