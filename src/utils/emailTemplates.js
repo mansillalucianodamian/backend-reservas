@@ -162,7 +162,7 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
     acRow = `
       <tr>
         <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #4b5563;">Aire Acondicionado:</td>
-        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: ${conAire ? '#d97706' : '#1f2937'};">${conAire ? 'Sí (Tarifa doble aplicada)' : 'No'}</td>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: ${conAire ? '#166534' : '#6b7280'};">${conAire ? 'Sí' : 'No'}</td>
       </tr>
     `;
   }
@@ -180,8 +180,8 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
 
   const content = isQuincho ? `
     <div style="text-align: center; margin-bottom: 24px;">
-      <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho registrada!</h2>
-      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, registramos tu solicitud de reserva para el Quincho Municipal. Recordá que para confirmarla totalmente es necesario realizar el pago.</p>
+      <h2 style="margin: 16px 0 8px 0; color: #1e3a8a; font-size: 22px; font-weight: 700;">¡Reserva de Quincho recibida!</h2>
+      <p style="color: #4b5563; margin: 0; font-size: 15px;">Hola ${nombre}, recibimos tu solicitud para reservar el <strong>Quincho Municipal</strong>.</p>
     </div>
 
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
@@ -214,7 +214,7 @@ export const getBookingConfirmationEmailHtml = (nombre, { fecha, hora, dias, tot
           El pago deberá realizarse obligatoriamente durante el mes de <strong>${mesNombre} (no antes)</strong>, abonando el valor actualizado.
         </p>
       ` : `
-        <p style="margin: 0 0 12px 0; color: #1e40af;">Tienes un plazo de <strong>${plazoDias} días</strong> para abonar la reserva. De lo contrario, se cancelará automáticamente al finalizar dicho período.</p>
+        <p style="margin: 0 0 12px 0; color: #1e40af;">Para confirmar tu reserva, debes realizar el pago en las oficinas de la Municipalidad o mediante transferencia bancaria con anticipación a la fecha del evento para coordinar la entrega de llaves.</p>
       `}
       
       <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 500;">Opciones de pago disponibles:</p>
@@ -338,7 +338,7 @@ export const getBookingApprovedEmailHtml = (nombre, { fecha, hora, tipo = 'canch
     acRow = `
       <tr>
         <td style="padding: 16px 20px; font-weight: 600; color: #4b5563;">Aire Acondicionado:</td>
-        <td style="padding: 16px 20px; font-weight: 600; color: ${conAire ? '#d97706' : '#1f2937'};">${conAire ? 'Sí (Tarifa doble)' : 'No'}</td>
+        <td style="padding: 16px 20px; font-weight: 600; color: ${conAire ? '#166534' : '#6b7280'};">${conAire ? 'Sí' : 'No'}</td>
       </tr>
     `;
   }

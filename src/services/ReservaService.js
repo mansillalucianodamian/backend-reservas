@@ -123,7 +123,7 @@ class ReservaService {
             precio = precioCancha;
         }
 
-        const plazoDias = tipo === 'cancha' ? 2 : 3;
+        const plazoDias = tipo === 'cancha' ? 2 : null;
 
         await NotificationService.enviarConfirmacionReserva(
             usuario_id,

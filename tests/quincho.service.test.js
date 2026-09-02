@@ -113,7 +113,7 @@ describe('Servicio de Quincho - Reglas de Negocio y Tarifas', () => {
                 expect.objectContaining({ tipo: 'quincho' }),
                 1,
                 25000, // Solo precio base
-                3
+                null
             );
         });
 
@@ -139,7 +139,7 @@ describe('Servicio de Quincho - Reglas de Negocio y Tarifas', () => {
                 expect.objectContaining({ tipo: 'quincho', con_aire: 1 }),
                 1,
                 40000, // 25000 base + 15000 aire
-                3
+                null
             );
         });
 
@@ -161,7 +161,7 @@ describe('Servicio de Quincho - Reglas de Negocio y Tarifas', () => {
                 expect.objectContaining({ tipo: 'quincho' }),
                 1,
                 31500, // 21500 default base + 10000 default aire
-                3
+                null
             );
         });
     });
