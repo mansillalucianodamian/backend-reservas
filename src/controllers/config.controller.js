@@ -36,8 +36,10 @@ class ConfigController {
             const precioStr = await ConfigRepository.getByKey('precio_quincho');
             const precio = precioStr ? parseInt(precioStr, 10) : 21500;
             const senaStr = await ConfigRepository.getByKey('sena_quincho');
-            const sena = senaStr ? parseInt(senaStr, 10) : 5000;
-            return res.json({ ok: true, precio, sena });
+            const sena = senaStr ? parseInt(senaStr, 10) : 0;
+            const precioAireStr = await ConfigRepository.getByKey('precio_aire_quincho');
+            const precio_aire = precioAireStr ? parseInt(precioAireStr, 10) : 10000;
+            return res.json({ ok: true, precio, sena, precio_aire });
         } catch (error) {
             console.error('ERROR AL OBTENER CONFIG QUINCHO', error);
             return res.status(500).json({ ok: false, message: 'Error al obtener la configuración del quincho' });
@@ -46,16 +48,29 @@ class ConfigController {
 
     static async updatePrecioQuincho(req, res) {
         try {
-            const { precio, sena } = req.body;
+            const { precio, sena, precio_aire, precioAire } = req.body;
             
             const precioNum = parseInt(precio, 10);
-            const senaNum = parseInt(sena, 10);
-            if (isNaN(precioNum) || precioNum <= 0 || isNaN(senaNum) || senaNum <= 0) {
-                return res.status(400).json({ ok: false, message: 'El precio y la seña deben ser números enteros positivos' });
+            if (isNaN(precioNum) || precioNum <= 0) {
+                return res.status(400).json({ ok: false, message: 'El precio del quincho debe ser un número entero positivo' });
+            }
+
+            const aireValor = precio_aire !== undefined ? precio_aire : precioAire;
+            const precioAireNum = aireValor !== undefined ? parseInt(aireValor, 10) : NaN;
+            if (aireValor !== undefined && (isNaN(precioAireNum) || precioAireNum < 0)) {
+                return res.status(400).json({ ok: false, message: 'El precio del aire acondicionado debe ser un número mayor o igual a 0' });
             }
 
             await ConfigRepository.setByKey('precio_quincho', precioNum);
-            await ConfigRepository.setByKey('sena_quincho', senaNum);
+            if (sena !== undefined) {
+                const senaNum = parseInt(sena, 10);
+                if (!isNaN(senaNum) && senaNum >= 0) {
+                    await ConfigRepository.setByKey('sena_quincho', senaNum);
+                }
+            }
+            if (!isNaN(precioAireNum)) {
+                await ConfigRepository.setByKey('precio_aire_quincho', precioAireNum);
+            }
             return res.json({ ok: true, message: 'Tarifas del quincho actualizadas con éxito' });
         } catch (error) {
             console.error('ERROR AL ACTUALIZAR CONFIG QUINCHO', error);

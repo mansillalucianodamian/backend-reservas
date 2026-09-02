@@ -66,6 +66,18 @@ class ReservaService {
             }
         }
 
+        // 1.5. Si es quincho, validar exclusividad diaria (solo 1 reserva por día en cualquier horario)
+        if (tipo === 'quincho') {
+            const reservasFecha = await ReservaRepository.getByFecha(fecha);
+            const tieneReservaActiva = reservasFecha.some(r =>
+                r.tipo === 'quincho' &&
+                !["cancelado", "cancelada", "rechazado", "rechazada"].includes((r.estado || "").toLowerCase())
+            );
+            if (tieneReservaActiva) {
+                throw new ServerError(400, 'El quincho ya cuenta con una reserva registrada para este día. Solo se permite un turno por día.');
+            }
+        }
+
         // 2. Validar que el horario no esté ocupado para este tipo de recurso
         const reservaExistente = await ReservaRepository.findByFechaHora(fecha, hora, tipo);
         if (reservaExistente) {
@@ -85,17 +97,21 @@ class ReservaService {
 
         let precio = 5000;
         if (tipo === 'quincho') {
+            let precioBase = 21500;
+            let precioAire = 10000;
             try {
                 const precioStr = await ConfigRepository.getByKey('precio_quincho');
-                if (precioStr) precio = parseInt(precioStr, 10);
-                else precio = 21500;
+                if (precioStr) precioBase = parseInt(precioStr, 10);
             } catch (err) {
                 console.error('Error al obtener el precio de quincho para la notificacion:', err);
-                precio = 21500;
             }
-            if (con_aire) {
-                precio = precio * 2;
+            try {
+                const precioAireStr = await ConfigRepository.getByKey('precio_aire_quincho');
+                if (precioAireStr) precioAire = parseInt(precioAireStr, 10);
+            } catch (err) {
+                console.error('Error al obtener el precio de aire quincho para la notificacion:', err);
             }
+            precio = precioBase + (con_aire ? precioAire : 0);
         } else {
             let precioCancha = 5000;
             try {
@@ -243,7 +259,7 @@ class ReservaService {
             horariosABloquear = hora.map(h => h.toString().trim().substring(0, 5));
         } else if (typeof hora === 'string' && (hora.toLowerCase() === 'todos' || hora.toLowerCase() === 'all')) {
             if (tipo === 'quincho') {
-                horariosABloquear = ['09:00', '19:00'];
+                horariosABloquear = ['10:00', '19:00'];
             } else {
                 horariosABloquear = [];
                 for (let h = 7; h <= 24; h++) {
@@ -299,7 +315,7 @@ class ReservaService {
     static async getDisponibles(fecha, tipo = 'cancha') {
         const todosHorarios = [];
         if (tipo === 'quincho') {
-            todosHorarios.push('09:00', '19:00');
+            todosHorarios.push('10:00', '19:00');
         } else {
             for (let h = 7; h <= 24; h++) {
                 const hora = h === 24 ? '00:00' : `${h.toString().padStart(2, '0')}:00`;
@@ -312,6 +328,15 @@ class ReservaService {
         const ocupados = reservas
             .filter(r => r.tipo === tipo && ["pendiente", "aprobado", "bloqueado"].includes((r.estado || "").toLowerCase()))
             .map(r => r.hora.trim().substring(0, 5));
+
+        if (tipo === 'quincho') {
+            // Regla de turno único diario: si hay al menos una reserva activa en cualquier horario, ambos quedan no disponibles
+            const diaOcupado = ocupados.length > 0;
+            return todosHorarios.map(h => ({
+                hora: h,
+                disponible: !diaOcupado
+            }));
+        }
 
         // 👇 devolvemos todos los horarios con estado
         return todosHorarios.map(h => ({
