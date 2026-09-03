@@ -171,8 +171,24 @@ describe('Servicio de Quincho - Reglas de Negocio y Tarifas', () => {
             vi.spyOn(ReservaRepository, 'getFechasOcupadas').mockResolvedValue(['2026-09-15', '2026-09-20']);
 
             const fechas = await ReservaService.getFechasOcupadas('quincho');
-            expect(fechas).toEqual(['2026-09-15', '2026-09-20']);
+            expect(fechas).toEqual(expect.arrayContaining(['2026-09-15', '2026-09-20']));
             expect(ReservaRepository.getFechasOcupadas).toHaveBeenCalledWith('quincho');
+        });
+
+        it('debe bloquear ambos turnos del día de hoy para quincho si ya pasaron las 10:00 hs', async () => {
+            vi.spyOn(ReservaRepository, 'getByFecha').mockResolvedValue([]);
+            const hoy = new Date();
+            const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+
+            const disponibles = await ReservaService.getDisponibles(hoyStr, 'quincho');
+            // Si la prueba corre pasadas las 10hs, ambos turnos deben estar bloqueados (disponible: false)
+            const horaActual = new Date().getHours();
+            if (horaActual >= 10) {
+                expect(disponibles).toEqual([
+                    { hora: '10:00', disponible: false },
+                    { hora: '19:00', disponible: false }
+                ]);
+            }
         });
     });
 });

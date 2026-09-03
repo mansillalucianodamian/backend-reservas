@@ -76,6 +76,16 @@ class ReservaService {
             if (tieneReservaActiva) {
                 throw new ServerError(400, 'El quincho ya cuenta con una reserva registrada para este día. Solo se permite un turno por día.');
             }
+
+            // Validar si es el día corriente y ya pasaron las 10:00 hs
+            const hoy = new Date();
+            const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+            if (fecha === hoyStr) {
+                const horaActualArg = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
+                if (horaActualArg >= 10) {
+                    throw new ServerError(400, 'El alquiler del quincho para el día de hoy ya no se encuentra disponible.');
+                }
+            }
         }
 
         // 2. Validar que el horario no esté ocupado para este tipo de recurso
@@ -331,7 +341,18 @@ class ReservaService {
 
         if (tipo === 'quincho') {
             // Regla de turno único diario: si hay al menos una reserva activa en cualquier horario, ambos quedan no disponibles
-            const diaOcupado = ocupados.length > 0;
+            let diaOcupado = ocupados.length > 0;
+
+            // Si es la fecha de hoy y ya son las 10:00 hs o más, el quincho ya no se puede alquilar hoy: se bloquea todo el día
+            const hoy = new Date();
+            const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+            if (fecha === hoyStr) {
+                const horaActualArg = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
+                if (horaActualArg >= 10) {
+                    diaOcupado = true;
+                }
+            }
+
             return todosHorarios.map(h => ({
                 hora: h,
                 disponible: !diaOcupado
@@ -409,7 +430,18 @@ class ReservaService {
     }
 
     static async getFechasOcupadas(tipo = 'quincho') {
-        return await ReservaRepository.getFechasOcupadas(tipo);
+        const fechas = await ReservaRepository.getFechasOcupadas(tipo);
+        if (tipo === 'quincho') {
+            const hoy = new Date();
+            const horaActualArg = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
+            if (horaActualArg >= 10) {
+                const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+                if (!fechas.includes(hoyStr)) {
+                    fechas.push(hoyStr);
+                }
+            }
+        }
+        return fechas;
     }
 }
 
