@@ -61,12 +61,9 @@ export const registerSchema = Joi.object({
       'string.pattern.base': 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'
     }),
 
-  rol: Joi.string()
-    .valid('super_admin', 'recepcionista', 'usuario')
-    .default('usuario')
-    .messages({
-      'any.only': 'El rol debe ser super_admin, recepcionista o usuario'
-    })
+  rol: Joi.forbidden().messages({
+    'any.unknown': 'No está permitido asignar rol en el registro público'
+  })
 });
 
 export const loginSchema = Joi.object({

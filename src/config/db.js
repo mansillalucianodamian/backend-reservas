@@ -1,12 +1,12 @@
 import mysql from 'mysql2/promise';
 import ENVIROMENT from './enviroment.config.js';
 
-// Log de verificación
+// Log de verificación sanitizado (CWE-532: No exponer credenciales)
 console.log("DB CONFIG:", {
   host: ENVIROMENT.DB_HOST,
   port: ENVIROMENT.DB_PORT,
   user: ENVIROMENT.DB_USER,
-  password: ENVIROMENT.DB_PASSWORD,
+  password: '***',
   database: ENVIROMENT.DB_NAME
 });
 
@@ -24,8 +24,9 @@ export const pool = mysql.createPool({
   database: ENVIROMENT.DB_NAME
 });
 
-// Asegurar columnas en la base de datos
+// Asegurar columnas en la base de datos (omitir en entorno de pruebas)
 (async () => {
+  if (process.env.NODE_ENV === 'test') return;
   try {
     // Verificar columna con_luz
     const [columnsLuz] = await pool.query("SHOW COLUMNS FROM reservas LIKE 'con_luz'");

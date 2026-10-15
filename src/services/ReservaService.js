@@ -1,198 +1,155 @@
 import { ServerError } from '../error.js';
-import ReservaRepository from '../repositories/reserva.repository.js';
+import DefaultReservaRepository, { ReservaRepository } from '../repositories/reserva.repository.js';
 import NotificationService from './NotificationService.js';
-import ConfigRepository from '../repositories/config.repository.js';
+import DefaultConfigRepository from '../repositories/config.repository.js';
+import { pool as defaultPool } from '../config/db.js';
+import { defaultStrategyRegistry, ResourceStrategyRegistry } from './strategies/index.js';
 
-class ReservaService {
-    static async getAll(filters) {
-        return await ReservaRepository.getAll(filters);
+export class ReservaService {
+    constructor(
+        reservaRepo = DefaultReservaRepository,
+        configRepo = DefaultConfigRepository,
+        notificationService = NotificationService,
+        dbPool = defaultPool,
+        strategyRegistry = defaultStrategyRegistry
+    ) {
+        this.reservaRepo = reservaRepo;
+        this.configRepo = configRepo;
+        this.notificationService = notificationService;
+        this.pool = dbPool;
+        this.strategyRegistry = strategyRegistry;
     }
 
-    static async getByUserId(userId) {
-        return await ReservaRepository.getByUserId(userId);
+    async getAll(filters) {
+        return await this.reservaRepo.getAll(filters);
     }
 
-    static async getById(id) {
-        const reserva = await ReservaRepository.getById(id);
+    async getByUserId(userId) {
+        return await this.reservaRepo.getByUserId(userId);
+    }
+
+    async getById(id) {
+        const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
         return reserva;
     }
 
-    static async create(data) {
+    /**
+     * Creación de reserva con Transaccionalidad ACID y Prevención de Double Booking (CON-01).
+     * Usa conexión dedicada, beginTransaction, FOR UPDATE para bloqueo de fila, y commit/rollback.
+     */
+    async create(data) {
         const { usuario_id, usuario_rol, fecha, hora, tipo = 'cancha', motivo, con_aire = 0 } = data;
 
         if (!usuario_id || !fecha || !hora) {
             throw new ServerError(400, 'Faltan datos obligatorios: usuario_id, fecha, hora');
         }
 
-        // 1. Si es cancha, verificar límite semanal (excluyendo a super_admin y recepcionista)
-        if (tipo === 'cancha' && usuario_rol !== 'super_admin' && usuario_rol !== 'recepcionista') {
-            const cleanFecha = typeof fecha === 'string' ? fecha.split('T')[0] : fecha;
-            const partes = cleanFecha.split('-').map(Number);
-            const fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
-            const diaSemana = fechaObj.getDay(); // 0: Domingo, 1: Lunes, ..., 6: Sábado
-            // Calcular Lunes de esa semana
-            const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+        // 1. Validar reglas de dominio mediante la estrategia correspondiente (SOLID - SRP & OCP)
+        const strategy = this.strategyRegistry.get(tipo);
+        await strategy.validarDisponibilidad(data, { reservaRepo: this.reservaRepo });
 
-            const lunes = new Date(partes[0], partes[1] - 1, partes[2] + diffLunes);
-            const domingo = new Date(partes[0], partes[1] - 1, partes[2] + diffLunes + 6);
+        // 🔒 Manejo de transacción ACID con conexión dedicada
+        let connection = null;
+        let managedTransaction = false;
 
-            const formatYMD = (d) => {
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const dia = String(d.getDate()).padStart(2, '0');
-                return `${y}-${m}-${dia}`;
-            };
-
-            const inicioStr = formatYMD(lunes);
-            const finStr = formatYMD(domingo);
-
-            // Verificar si el turno es de último momento (< 8 horas respecto al momento actual)
-            const [horaH, horaM] = (hora || '00:00').split(':').map(Number);
-            const turnoDateTime = new Date(partes[0], partes[1] - 1, partes[2], horaH || 0, horaM || 0, 0);
-            const ahora = new Date();
-            const diffHoras = (turnoDateTime.getTime() - ahora.getTime()) / (1000 * 60 * 60);
-            const esUltimoMomento = diffHoras > 0 && diffHoras < 8;
-
-            const reservasSemana = await ReservaRepository.findByUsuarioYSemana(usuario_id, inicioStr, finStr);
-            const maxPermitido = esUltimoMomento ? 3 : 2;
-
-            if (reservasSemana.length >= maxPermitido) {
-                if (maxPermitido === 2) {
-                    throw new ServerError(400, 'Ya tienes el máximo de 2 reservas de cancha para esta semana (Lunes a Domingo). Se habilita un 3er turno si faltan menos de 8 horas para el horario.');
-                } else {
-                    throw new ServerError(400, 'Ya alcanzaste el cupo máximo de 3 reservas de cancha para esta semana (incluyendo turno de último momento).');
+        if (this.pool && typeof this.pool.getConnection === 'function') {
+            try {
+                connection = await this.pool.getConnection();
+                if (connection && typeof connection.beginTransaction === 'function') {
+                    await connection.beginTransaction();
+                    managedTransaction = true;
                 }
+            } catch (err) {
+                connection = null;
+                managedTransaction = false;
             }
         }
 
-        // 1.5. Si es quincho, validar exclusividad diaria (solo 1 reserva por día en cualquier horario)
-        if (tipo === 'quincho') {
-            const reservasFecha = await ReservaRepository.getByFecha(fecha);
-            const tieneReservaActiva = reservasFecha.some(r =>
-                r.tipo === 'quincho' &&
-                !["cancelado", "cancelada", "rechazado", "rechazada"].includes((r.estado || "").toLowerCase())
+        let nuevaReserva;
+        try {
+            // 2. Validar que el horario no esté ocupado con FOR UPDATE dentro de la transacción
+            const reservaExistente = await this.reservaRepo.findByFechaHora(fecha, hora, tipo, connection);
+            if (reservaExistente) {
+                throw new ServerError(409, 'El horario ya está ocupado o bloqueado');
+            }
+
+            // 3. Crear la reserva
+            nuevaReserva = await this.reservaRepo.create({
+                usuario_id,
+                tipo,
+                fecha,
+                hora,
+                estado: 'Pendiente',
+                motivo: motivo || null,
+                con_aire: con_aire ? 1 : 0
+            }, connection);
+
+            if (managedTransaction && connection) {
+                await connection.commit();
+            }
+        } catch (error) {
+            if (managedTransaction && connection) {
+                await connection.rollback();
+            }
+            throw error;
+        } finally {
+            if (managedTransaction && connection && typeof connection.release === 'function') {
+                connection.release();
+            }
+        }
+
+        // 4. Enviar notificación fuera de la transacción para no retener bloqueos en la base de datos
+        try {
+            const { total: precio, plazoDias } = await strategy.calcularPrecio(data, { configRepo: this.configRepo });
+
+            await this.notificationService.enviarConfirmacionReserva(
+                usuario_id,
+                nuevaReserva,
+                1,
+                precio,
+                plazoDias
             );
-            if (tieneReservaActiva) {
-                throw new ServerError(400, 'El quincho ya cuenta con una reserva registrada para este día. Solo se permite un turno por día.');
-            }
-
-            // Validar si es el día corriente y ya pasaron las 10:00 hs
-            const hoy = new Date();
-            const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-            if (fecha === hoyStr) {
-                const horaActualArg = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
-                if (horaActualArg >= 10) {
-                    throw new ServerError(400, 'El alquiler del quincho para el día de hoy ya no se encuentra disponible.');
-                }
-            }
+        } catch (mailErr) {
+            console.error('[NOTIFICATION]: Error al enviar confirmación de reserva:', mailErr.message);
         }
-
-        // 2. Validar que el horario no esté ocupado para este tipo de recurso
-        const reservaExistente = await ReservaRepository.findByFechaHora(fecha, hora, tipo);
-        if (reservaExistente) {
-            throw new ServerError(400, 'El horario ya está ocupado o bloqueado');
-        }
-
-        // 3. Crear la reserva
-        const nuevaReserva = await ReservaRepository.create({
-            usuario_id,
-            tipo,
-            fecha,
-            hora,
-            estado: 'Pendiente',
-            motivo: motivo || null,
-            con_aire: con_aire ? 1 : 0
-        });
-
-        let precio = 5000;
-        if (tipo === 'quincho') {
-            let precioBase = 21500;
-            let precioAire = 10000;
-            try {
-                const precioStr = await ConfigRepository.getByKey('precio_quincho');
-                if (precioStr) precioBase = parseInt(precioStr, 10);
-            } catch (err) {
-                console.error('Error al obtener el precio de quincho para la notificacion:', err);
-            }
-            try {
-                const precioAireStr = await ConfigRepository.getByKey('precio_aire_quincho');
-                if (precioAireStr) precioAire = parseInt(precioAireStr, 10);
-            } catch (err) {
-                console.error('Error al obtener el precio de aire quincho para la notificacion:', err);
-            }
-            precio = precioBase + (con_aire ? precioAire : 0);
-        } else {
-            let precioCancha = 5000;
-            try {
-                const precioStr = await ConfigRepository.getByKey('precio_cancha');
-                if (precioStr) precioCancha = parseInt(precioStr, 10);
-            } catch (err) {
-                console.error('Error al obtener el precio de cancha para la notificacion:', err);
-            }
-            precio = precioCancha;
-        }
-
-        const plazoDias = tipo === 'cancha' ? 2 : null;
-
-        await NotificationService.enviarConfirmacionReserva(
-            usuario_id,
-            nuevaReserva,
-            1,
-            precio,
-            plazoDias
-        );
 
         return nuevaReserva;
     }
 
-
-
-    static async update(id, data) {
-        const reserva = await ReservaRepository.getById(id);
+    async update(id, data) {
+        const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
 
-        // Solo permitimos actualizar fecha, hora o estado
         const { fecha, hora, estado } = data;
-        return await ReservaRepository.updateById(id, { fecha, hora, estado });
+        return await this.reservaRepo.updateById(id, { fecha, hora, estado });
     }
 
-    static async delete(id) {
-        const reserva = await ReservaRepository.getById(id);
+    async delete(id) {
+        const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
-        return await ReservaRepository.deleteById(id);
+        return await this.reservaRepo.deleteById(id);
     }
-    static async aprobar(id) {
-        // Traer la reserva original
-        const reserva = await ReservaRepository.getById(id);
-        console.log("Reserva original desde BD:", reserva);
 
+    async aprobar(id) {
+        const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
 
         if (reserva.estado !== 'Pendiente') {
             throw new ServerError(400, 'Solo se pueden aprobar reservas pendientes');
         }
 
-        // Actualizar estado y registrar fecha de aprobación
-        await ReservaRepository.updateById(id, { 
+        await this.reservaRepo.updateById(id, {
             estado: 'Aprobado',
             fecha_aprobacion: new Date()
         });
 
-        // Volver a traer la reserva completa ya aprobada
-        const reservaActualizada = await ReservaRepository.getById(id);
-        console.log("Reserva después de aprobar:", reservaActualizada);
-
-        // Normalizar hora (ej: "10:00:00" → "10:00")
+        const reservaActualizada = await this.reservaRepo.getById(id);
         if (reservaActualizada.hora) {
             reservaActualizada.hora = reservaActualizada.hora.slice(0, 5);
-            console.log("Hora normalizada:", reservaActualizada.hora);
-        } else {
-            console.error("La reserva no tiene hora definida!");
         }
 
-        // Enviar notificación de confirmación de pago
-        await NotificationService.enviarConfirmacionPago(
+        await this.notificationService.enviarConfirmacionPago(
             reservaActualizada.usuario_id,
             reservaActualizada
         );
@@ -200,15 +157,14 @@ class ReservaService {
         return reservaActualizada;
     }
 
-    static async deshacerAprobacion(id, user) {
-        const reserva = await ReservaRepository.getById(id);
+    async deshacerAprobacion(id, user) {
+        const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
 
         if (reserva.estado !== 'Aprobado') {
             throw new ServerError(400, 'Solo se puede deshacer la aprobación de reservas aprobadas');
         }
 
-        // Si es recepcionista, verificar período de gracia de 15 minutos
         if (user.rol === 'recepcionista') {
             if (reserva.fecha_aprobacion) {
                 const fechaAprobacion = new Date(reserva.fecha_aprobacion);
@@ -220,43 +176,36 @@ class ReservaService {
             }
         }
 
-        // Revertir a estado Pendiente y resetear fecha_aprobacion
-        await ReservaRepository.updateById(id, { 
+        await this.reservaRepo.updateById(id, {
             estado: 'Pendiente',
-            fecha_aprobacion: null 
+            fecha_aprobacion: null
         });
 
-        const reservaActualizada = await ReservaRepository.getById(id);
-        return reservaActualizada;
+        return await this.reservaRepo.getById(id);
     }
 
-
-    static async cancelar(id, user) {
-        const reserva = await ReservaRepository.getById(id);
+    async cancelar(id, user) {
+        const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
 
         if (reserva.estado === 'Cancelado') {
             throw new ServerError(400, 'La reserva ya está cancelada');
         }
 
-        // Si es super admin → estado Cancelado
         if (user.rol === 'super_admin') {
-            await ReservaRepository.updateById(id, { estado: 'Cancelado' });
+            await this.reservaRepo.updateById(id, { estado: 'Cancelado' });
             return { ok: true, tipo: reserva.tipo, con_aire: reserva.con_aire };
         }
 
-        // Si es usuario común → eliminar la reserva para liberar el horario
         if (user.rol === 'usuario' || user.rol === 'recepcionista') {
-            await ReservaRepository.deleteById(id);
+            await this.reservaRepo.deleteById(id);
             return { ok: true, message: 'Reserva eliminada, horario disponible', tipo: reserva.tipo, con_aire: reserva.con_aire };
         }
 
         throw new ServerError(403, 'No autorizado para cancelar');
     }
 
-
-
-    static async bloquear(data) {
+    async bloquear(data) {
         const { fecha, hora, motivo, tipo = 'cancha', con_luz = false } = data;
 
         if (!fecha || !hora) {
@@ -268,14 +217,8 @@ class ReservaService {
         if (Array.isArray(hora)) {
             horariosABloquear = hora.map(h => h.toString().trim().substring(0, 5));
         } else if (typeof hora === 'string' && (hora.toLowerCase() === 'todos' || hora.toLowerCase() === 'all')) {
-            if (tipo === 'quincho') {
-                horariosABloquear = ['10:00', '19:00'];
-            } else {
-                horariosABloquear = [];
-                for (let h = 7; h <= 24; h++) {
-                    horariosABloquear.push(h === 24 ? '00:00' : `${h.toString().padStart(2, '0')}:00`);
-                }
-            }
+            const strategy = this.strategyRegistry.get(tipo);
+            horariosABloquear = strategy.getHorariosEstandar();
         } else {
             horariosABloquear = [hora.toString().trim().substring(0, 5)];
         }
@@ -283,19 +226,19 @@ class ReservaService {
         const resultados = [];
 
         for (const h of horariosABloquear) {
-            const reservaExistente = await ReservaRepository.findByFechaHora(fecha, h, tipo);
+            const reservaExistente = await this.reservaRepo.findByFechaHora(fecha, h, tipo);
 
             if (reservaExistente) {
                 const estadoAnterior = reservaExistente.estado;
 
-                await ReservaRepository.updateById(reservaExistente.id, {
+                await this.reservaRepo.updateById(reservaExistente.id, {
                     estado: 'Bloqueado',
                     motivo: motivo || 'Bloqueo de horario',
                     con_luz: con_luz ? 1 : 0
                 });
 
                 if (estadoAnterior === 'Pendiente' || estadoAnterior === 'Aprobado') {
-                    await NotificationService.enviarAdvertencia(
+                    await this.notificationService.enviarAdvertencia(
                         reservaExistente.usuario_id,
                         motivo || 'Bloqueo de horario',
                         reservaExistente.fecha,
@@ -306,7 +249,7 @@ class ReservaService {
 
                 resultados.push({ ...reservaExistente, estado: 'Bloqueado', motivo: motivo || 'Bloqueo de horario', con_luz: con_luz ? 1 : 0 });
             } else {
-                const nuevaReservaBloqueada = await ReservaRepository.create({
+                const nuevaReservaBloqueada = await this.reservaRepo.create({
                     usuario_id: null,
                     tipo,
                     fecha,
@@ -322,61 +265,34 @@ class ReservaService {
         return resultados.length === 1 ? resultados[0] : resultados;
     }
 
-    static async getDisponibles(fecha, tipo = 'cancha') {
-        const todosHorarios = [];
-        if (tipo === 'quincho') {
-            todosHorarios.push('10:00', '19:00');
-        } else {
-            for (let h = 7; h <= 24; h++) {
-                const hora = h === 24 ? '00:00' : `${h.toString().padStart(2, '0')}:00`;
-                todosHorarios.push(hora);
-            }
-        }
+    async getDisponibles(fecha, tipo = 'cancha') {
+        const strategy = this.strategyRegistry.get(tipo);
+        const todosHorarios = strategy.getHorariosEstandar();
+        const reservas = await this.reservaRepo.getByFecha(fecha);
 
-        const reservas = await ReservaRepository.getByFecha(fecha);
+        if (typeof strategy.calcularDisponibilidadHorarios === 'function') {
+            return strategy.calcularDisponibilidadHorarios(fecha, reservas, todosHorarios);
+        }
 
         const ocupados = reservas
             .filter(r => r.tipo === tipo && ["pendiente", "aprobado", "bloqueado"].includes((r.estado || "").toLowerCase()))
             .map(r => r.hora.trim().substring(0, 5));
 
-        if (tipo === 'quincho') {
-            // Regla de turno único diario: si hay al menos una reserva activa en cualquier horario, ambos quedan no disponibles
-            let diaOcupado = ocupados.length > 0;
-
-            // Si es la fecha de hoy y ya son las 10:00 hs o más, el quincho ya no se puede alquilar hoy: se bloquea todo el día
-            const hoy = new Date();
-            const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-            if (fecha === hoyStr) {
-                const horaActualArg = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
-                if (horaActualArg >= 10) {
-                    diaOcupado = true;
-                }
-            }
-
-            return todosHorarios.map(h => ({
-                hora: h,
-                disponible: !diaOcupado
-            }));
-        }
-
-        // 👇 devolvemos todos los horarios con estado
         return todosHorarios.map(h => ({
             hora: h,
             disponible: !ocupados.includes(h)
         }));
     }
 
-
-
-    static async getPendientes() {
-        return await ReservaRepository.getPendientes();
+    async getPendientes() {
+        return await this.reservaRepo.getPendientes();
     }
 
-    static async getRecientesAprobadas() {
-        return await ReservaRepository.getRecientesAprobadas();
+    async getRecientesAprobadas() {
+        return await this.reservaRepo.getRecientesAprobadas();
     }
 
-    static async bloquearMasivo(data) {
+    async bloquearMasivo(data) {
         const { fechaInicio, fechaFin, diasSemana, horas, motivo, con_luz = false } = data;
 
         if (!fechaInicio || !fechaFin || !diasSemana || !horas || !Array.isArray(diasSemana) || !Array.isArray(horas)) {
@@ -391,7 +307,7 @@ class ReservaService {
 
         const fechasABloquear = [];
         while (current <= end) {
-            const dayOfWeek = current.getDay(); // 0 = Sunday, 1 = Monday, 2 = Tuesday, etc.
+            const dayOfWeek = current.getDay();
             if (diasSemana.includes(dayOfWeek)) {
                 const yyyy = current.getFullYear();
                 const mm = String(current.getMonth() + 1).padStart(2, '0');
@@ -405,7 +321,7 @@ class ReservaService {
         const detalles = [];
 
         for (const fecha of fechasABloquear) {
-            const blockResult = await ReservaService.bloquear({
+            const blockResult = await this.bloquear({
                 fecha,
                 hora: horas,
                 motivo: motivo || 'Bloqueo de horario masivo',
@@ -429,8 +345,8 @@ class ReservaService {
         };
     }
 
-    static async getFechasOcupadas(tipo = 'quincho') {
-        const fechas = await ReservaRepository.getFechasOcupadas(tipo);
+    async getFechasOcupadas(tipo = 'quincho') {
+        const fechas = await this.reservaRepo.getFechasOcupadas(tipo);
         if (tipo === 'quincho') {
             const hoy = new Date();
             const horaActualArg = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
@@ -444,5 +360,24 @@ class ReservaService {
         return fechas;
     }
 }
+
+const defaultReservaService = new ReservaService();
+
+// Puentes estáticos para retrocompatibilidad total y soporte de vi.spyOn en pruebas existentes
+ReservaService.getAll = (...args) => defaultReservaService.getAll(...args);
+ReservaService.getByUserId = (...args) => defaultReservaService.getByUserId(...args);
+ReservaService.getById = (...args) => defaultReservaService.getById(...args);
+ReservaService.create = (...args) => defaultReservaService.create(...args);
+ReservaService.update = (...args) => defaultReservaService.update(...args);
+ReservaService.delete = (...args) => defaultReservaService.delete(...args);
+ReservaService.aprobar = (...args) => defaultReservaService.aprobar(...args);
+ReservaService.deshacerAprobacion = (...args) => defaultReservaService.deshacerAprobacion(...args);
+ReservaService.cancelar = (...args) => defaultReservaService.cancelar(...args);
+ReservaService.bloquear = (...args) => defaultReservaService.bloquear(...args);
+ReservaService.getDisponibles = (...args) => defaultReservaService.getDisponibles(...args);
+ReservaService.getPendientes = (...args) => defaultReservaService.getPendientes(...args);
+ReservaService.getRecientesAprobadas = (...args) => defaultReservaService.getRecientesAprobadas(...args);
+ReservaService.bloquearMasivo = (...args) => defaultReservaService.bloquearMasivo(...args);
+ReservaService.getFechasOcupadas = (...args) => defaultReservaService.getFechasOcupadas(...args);
 
 export default ReservaService;

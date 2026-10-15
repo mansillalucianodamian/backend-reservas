@@ -8,7 +8,9 @@ import { getVerificationEmailHtml } from "../utils/emailTemplates.js";
 
 class AuthService {
     static async register(userData, originHost = null) {
-        const { nombre, apellido, dni, telefono, email, password, rol } = userData;
+        const { nombre, apellido, dni, telefono, email, password } = userData;
+        // 🔒 Blindaje SEC-01: El rol siempre es forzado a 'usuario' en el registro público
+        const rol = 'usuario';
 
         const user = await UserRepository.getByEmail(email);
         if (user) throw new ServerError(409, 'Email ya en uso');

@@ -25,6 +25,16 @@ class ConfigRepository {
             throw error;
         }
     }
+
+    static async ping() {
+        try {
+            const [rows] = await pool.query('SELECT 1 + 1 AS result');
+            return rows && rows.length > 0 ? rows[0].result : 2;
+        } catch (error) {
+            console.error('[CONFIG REPO]: Fallo en ping de conexión', error);
+            throw error;
+        }
+    }
 }
 
 export default ConfigRepository;

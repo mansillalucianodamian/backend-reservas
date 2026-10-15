@@ -1,104 +1,129 @@
 import axios from 'axios';
 import ENVIROMENT from '../config/enviroment.config.js';
 
+export const SHELLY_HTTP_TIMEOUT = 5000; // 🔒 5 segundos máximo para evitar sockets colgados (ROB-01)
 const LOCAL_IP = '192.168.0.14'; // Fallback local para pruebas del usuario
 
 export async function encenderLuz() {
     const { SHELLY_CLOUD_URL, SHELLY_DEVICE_ID, SHELLY_AUTH_KEY } = ENVIROMENT;
 
-    if (SHELLY_CLOUD_URL && SHELLY_DEVICE_ID && SHELLY_AUTH_KEY) {
-        console.log(`[SHELLY CLOUD]: Enviando comando ENCENDER a dispositivo: ${SHELLY_DEVICE_ID}`);
-        const url = `${SHELLY_CLOUD_URL}/device/relay/control`;
-        
-        const params = new URLSearchParams();
-        params.append('id', SHELLY_DEVICE_ID);
-        params.append('auth_key', SHELLY_AUTH_KEY);
-        params.append('turn', 'on');
-        params.append('channel', '0');
+    try {
+        if (SHELLY_CLOUD_URL && SHELLY_DEVICE_ID && SHELLY_AUTH_KEY) {
+            console.log(`[SHELLY CLOUD]: Enviando comando ENCENDER a dispositivo: ${SHELLY_DEVICE_ID}`);
+            const url = `${SHELLY_CLOUD_URL}/device/relay/control`;
+            
+            const params = new URLSearchParams();
+            params.append('id', SHELLY_DEVICE_ID);
+            params.append('auth_key', SHELLY_AUTH_KEY);
+            params.append('turn', 'on');
+            params.append('channel', '0');
 
-        return axios.post(url, params, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+            return await axios.post(url, params, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                timeout: SHELLY_HTTP_TIMEOUT
+            });
+        }
+
+        console.log(`[SHELLY LOCAL]: Usando fallback local a IP: ${LOCAL_IP}`);
+        return await axios.get(`http://${LOCAL_IP}/relay/0?turn=on`, { timeout: SHELLY_HTTP_TIMEOUT });
+    } catch (err) {
+        console.warn(`[SHELLY ERROR]: Fallo al encender luz cancha (${err.code || err.message})`);
+        throw new Error(`Error de comunicación con Shelly Cancha: ${err.message}`);
     }
-
-    console.log(`[SHELLY LOCAL]: Usando fallback local a IP: ${LOCAL_IP}`);
-    return axios.get(`http://${LOCAL_IP}/relay/0?turn=on`);
 }
 
 export async function apagarLuz() {
     const { SHELLY_CLOUD_URL, SHELLY_DEVICE_ID, SHELLY_AUTH_KEY } = ENVIROMENT;
 
-    if (SHELLY_CLOUD_URL && SHELLY_DEVICE_ID && SHELLY_AUTH_KEY) {
-        console.log(`[SHELLY CLOUD]: Enviando comando APAGAR a dispositivo: ${SHELLY_DEVICE_ID}`);
-        const url = `${SHELLY_CLOUD_URL}/device/relay/control`;
+    try {
+        if (SHELLY_CLOUD_URL && SHELLY_DEVICE_ID && SHELLY_AUTH_KEY) {
+            console.log(`[SHELLY CLOUD]: Enviando comando APAGAR a dispositivo: ${SHELLY_DEVICE_ID}`);
+            const url = `${SHELLY_CLOUD_URL}/device/relay/control`;
 
-        const params = new URLSearchParams();
-        params.append('id', SHELLY_DEVICE_ID);
-        params.append('auth_key', SHELLY_AUTH_KEY);
-        params.append('turn', 'off');
-        params.append('channel', '0');
+            const params = new URLSearchParams();
+            params.append('id', SHELLY_DEVICE_ID);
+            params.append('auth_key', SHELLY_AUTH_KEY);
+            params.append('turn', 'off');
+            params.append('channel', '0');
 
-        return axios.post(url, params, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+            return await axios.post(url, params, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                timeout: SHELLY_HTTP_TIMEOUT
+            });
+        }
+
+        console.log(`[SHELLY LOCAL]: Usando fallback local a IP: ${LOCAL_IP}`);
+        return await axios.get(`http://${LOCAL_IP}/relay/0?turn=off`, { timeout: SHELLY_HTTP_TIMEOUT });
+    } catch (err) {
+        console.warn(`[SHELLY ERROR]: Fallo al apagar luz cancha (${err.code || err.message})`);
+        throw new Error(`Error de comunicación con Shelly Cancha: ${err.message}`);
     }
-
-    console.log(`[SHELLY LOCAL]: Usando fallback local a IP: ${LOCAL_IP}`);
-    return axios.get(`http://${LOCAL_IP}/relay/0?turn=off`);
 }
 
 export async function encenderAireQuincho() {
     const { SHELLY_QUINCHO_CLOUD_URL, SHELLY_QUINCHO_DEVICE_ID, SHELLY_QUINCHO_AUTH_KEY, SHELLY_QUINCHO_LOCAL_IP } = ENVIROMENT;
     const localIp = SHELLY_QUINCHO_LOCAL_IP || '192.168.1.105';
 
-    if (SHELLY_QUINCHO_CLOUD_URL && SHELLY_QUINCHO_DEVICE_ID && SHELLY_QUINCHO_AUTH_KEY) {
-        console.log(`[SHELLY QUINCHO CLOUD]: Enviando comando ENCENDER a dispositivo: ${SHELLY_QUINCHO_DEVICE_ID}`);
-        const url = `${SHELLY_QUINCHO_CLOUD_URL}/device/relay/control`;
-        
-        const params = new URLSearchParams();
-        params.append('id', SHELLY_QUINCHO_DEVICE_ID);
-        params.append('auth_key', SHELLY_QUINCHO_AUTH_KEY);
-        params.append('turn', 'on');
-        params.append('channel', '0');
+    try {
+        if (SHELLY_QUINCHO_CLOUD_URL && SHELLY_QUINCHO_DEVICE_ID && SHELLY_QUINCHO_AUTH_KEY) {
+            console.log(`[SHELLY QUINCHO CLOUD]: Enviando comando ENCENDER a dispositivo: ${SHELLY_QUINCHO_DEVICE_ID}`);
+            const url = `${SHELLY_QUINCHO_CLOUD_URL}/device/relay/control`;
+            
+            const params = new URLSearchParams();
+            params.append('id', SHELLY_QUINCHO_DEVICE_ID);
+            params.append('auth_key', SHELLY_QUINCHO_AUTH_KEY);
+            params.append('turn', 'on');
+            params.append('channel', '0');
 
-        return axios.post(url, params, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+            return await axios.post(url, params, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                timeout: SHELLY_HTTP_TIMEOUT
+            });
+        }
+
+        console.log(`[SHELLY QUINCHO LOCAL]: Usando fallback local a IP: ${localIp}`);
+        return await axios.get(`http://${localIp}/relay/0?turn=on`, { timeout: SHELLY_HTTP_TIMEOUT });
+    } catch (err) {
+        console.warn(`[SHELLY ERROR]: Fallo al encender aire quincho (${err.code || err.message})`);
+        throw new Error(`Error de comunicación con Shelly Quincho: ${err.message}`);
     }
-
-    console.log(`[SHELLY QUINCHO LOCAL]: Usando fallback local a IP: ${localIp}`);
-    return axios.get(`http://${localIp}/relay/0?turn=on`);
 }
 
 export async function apagarAireQuincho() {
     const { SHELLY_QUINCHO_CLOUD_URL, SHELLY_QUINCHO_DEVICE_ID, SHELLY_QUINCHO_AUTH_KEY, SHELLY_QUINCHO_LOCAL_IP } = ENVIROMENT;
     const localIp = SHELLY_QUINCHO_LOCAL_IP || '192.168.1.105';
 
-    if (SHELLY_QUINCHO_CLOUD_URL && SHELLY_QUINCHO_DEVICE_ID && SHELLY_QUINCHO_AUTH_KEY) {
-        console.log(`[SHELLY QUINCHO CLOUD]: Enviando comando APAGAR a dispositivo: ${SHELLY_QUINCHO_DEVICE_ID}`);
-        const url = `${SHELLY_QUINCHO_CLOUD_URL}/device/relay/control`;
+    try {
+        if (SHELLY_QUINCHO_CLOUD_URL && SHELLY_QUINCHO_DEVICE_ID && SHELLY_QUINCHO_AUTH_KEY) {
+            console.log(`[SHELLY QUINCHO CLOUD]: Enviando comando APAGAR a dispositivo: ${SHELLY_QUINCHO_DEVICE_ID}`);
+            const url = `${SHELLY_QUINCHO_CLOUD_URL}/device/relay/control`;
 
-        const params = new URLSearchParams();
-        params.append('id', SHELLY_QUINCHO_DEVICE_ID);
-        params.append('auth_key', SHELLY_QUINCHO_AUTH_KEY);
-        params.append('turn', 'off');
-        params.append('channel', '0');
+            const params = new URLSearchParams();
+            params.append('id', SHELLY_QUINCHO_DEVICE_ID);
+            params.append('auth_key', SHELLY_QUINCHO_AUTH_KEY);
+            params.append('turn', 'off');
+            params.append('channel', '0');
 
-        return axios.post(url, params, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+            return await axios.post(url, params, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                timeout: SHELLY_HTTP_TIMEOUT
+            });
+        }
+
+        console.log(`[SHELLY QUINCHO LOCAL]: Usando fallback local a IP: ${localIp}`);
+        return await axios.get(`http://${localIp}/relay/0?turn=off`, { timeout: SHELLY_HTTP_TIMEOUT });
+    } catch (err) {
+        console.warn(`[SHELLY ERROR]: Fallo al apagar aire quincho (${err.code || err.message})`);
+        throw new Error(`Error de comunicación con Shelly Quincho: ${err.message}`);
     }
-
-    console.log(`[SHELLY QUINCHO LOCAL]: Usando fallback local a IP: ${localIp}`);
-    return axios.get(`http://${localIp}/relay/0?turn=off`);
 }
 
 export async function getLuzStatus() {
@@ -114,7 +139,7 @@ export async function getLuzStatus() {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            timeout: 5000
+            timeout: SHELLY_HTTP_TIMEOUT
         });
 
         if (response.data && response.data.isok) {
@@ -137,7 +162,7 @@ export async function getLuzStatus() {
 
     // Fallback local
     const localUrl = `http://${LOCAL_IP}/status`;
-    const response = await axios.get(localUrl, { timeout: 3000 });
+    const response = await axios.get(localUrl, { timeout: SHELLY_HTTP_TIMEOUT });
     if (response.data) {
         if (response.data.relays && response.data.relays[0]) {
             return {
@@ -169,7 +194,7 @@ export async function getAireQuinchoStatus() {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            timeout: 5000
+            timeout: SHELLY_HTTP_TIMEOUT
         });
 
         if (response.data && response.data.isok) {
@@ -192,7 +217,7 @@ export async function getAireQuinchoStatus() {
 
     // Fallback local
     const localUrl = `http://${localIp}/status`;
-    const response = await axios.get(localUrl, { timeout: 3000 });
+    const response = await axios.get(localUrl, { timeout: SHELLY_HTTP_TIMEOUT });
     if (response.data) {
         if (response.data.relays && response.data.relays[0]) {
             return {

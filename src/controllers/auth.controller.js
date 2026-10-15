@@ -7,22 +7,21 @@ class AuthController {
     static async register(req, res) {
         try {
             // Desestructuramos el body
-            const { nombre, apellido, dni, telefono, email, password, rol } = req.body;
+            const { nombre, apellido, dni, telefono, email, password } = req.body;
 
             // Obtener el host de origen dinámicamente
             const protocol = req.headers['x-forwarded-proto'] || 'http';
             const host = req.get('host');
             const originHost = host ? `${protocol}://${host}` : null;
 
-            // Pasamos el objeto completo al servicio
+            // Pasamos el objeto al servicio (rol es 'usuario' por defecto)
             await AuthService.register({
                 nombre,
                 apellido,
                 dni,
                 telefono,
                 email,
-                password,
-                rol
+                password
             }, originHost);
 
             // Respuesta de éxito

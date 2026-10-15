@@ -1,13 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import ENVIROMENT from './config/enviroment.config.js';
-import { pool } from './config/db.js';
 
-// Routers
+// Routers y Controladores
 import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
 import configRouter from './routes/config.router.js';
+import ConfigController from './controllers/config.controller.js';
 import { apagarLuz, encenderLuz, encenderAireQuincho, apagarAireQuincho } from './services/ShellyService.js';
 import { iniciarSincronizadorLuces } from './services/SchedulerService.js';
 
@@ -23,22 +23,19 @@ app.use('/api/users', userRouter);
 app.use('/api/reservas', reservasRouter);
 app.use('/api/configuracion', configRouter);
 
-// Endpoint de prueba para verificar conexión MySQL
-app.get('/ping', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT 1 + 1 AS result');
-    res.json({ message: 'Conexión OK', result: rows[0].result });
-  } catch (error) {
-    console.error('[SERVER ERROR]: Fallo en la conexión', error);
-    res.status(500).json({ error: 'Error en la conexión a MySQL' });
-  }
-});
+// Endpoint de prueba para verificar conexión MySQL (Clean Architecture - delegado a ConfigController/Service)
+app.get('/ping', ConfigController.ping);
 
-// Servidor
-app.listen(ENVIROMENT.PORT || 8080, '0.0.0.0', () => {
-  console.log(`Servidor corriendo en el puerto ${ENVIROMENT.PORT || 8080}`);
-  iniciarSincronizadorLuces();
-});
+// Servidor (solo iniciar escucha si no estamos en entorno de testing)
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(ENVIROMENT.PORT || 8080, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en el puerto ${ENVIROMENT.PORT || 8080}`);
+    iniciarSincronizadorLuces();
+  });
+}
+
+export { app };
+export default app;
 
 // Rutas de prueba para Shelly
 app.get("/test-shelly/on", async (req, res) => {
