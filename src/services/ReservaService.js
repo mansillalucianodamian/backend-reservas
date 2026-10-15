@@ -28,9 +28,17 @@ export class ReservaService {
         return await this.reservaRepo.getByUserId(userId);
     }
 
-    async getById(id) {
+    async getById(id, user = null) {
         const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
+
+        // Blindaje IDOR: usuario estándar solo puede consultar sus propias reservas
+        if (user && !['super_admin', 'recepcionista'].includes(user.rol)) {
+            if (reserva.usuario_id && Number(reserva.usuario_id) !== Number(user.id)) {
+                throw new ServerError(403, 'Acceso denegado: no tienes permiso para acceder a esta reserva');
+            }
+        }
+
         return reserva;
     }
 
@@ -117,17 +125,32 @@ export class ReservaService {
         return nuevaReserva;
     }
 
-    async update(id, data) {
+    async update(id, data, user = null) {
         const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
+
+        // Blindaje IDOR: un usuario común solo puede modificar su propia reserva
+        if (user && !['super_admin', 'recepcionista'].includes(user.rol)) {
+            if (reserva.usuario_id && Number(reserva.usuario_id) !== Number(user.id)) {
+                throw new ServerError(403, 'Acceso denegado: no tienes permiso para modificar esta reserva');
+            }
+        }
 
         const { fecha, hora, estado } = data;
         return await this.reservaRepo.updateById(id, { fecha, hora, estado });
     }
 
-    async delete(id) {
+    async delete(id, user = null) {
         const reserva = await this.reservaRepo.getById(id);
         if (!reserva) throw new ServerError(404, 'Reserva no encontrada');
+
+        // Blindaje IDOR: un usuario común no puede eliminar reservas de otros
+        if (user && !['super_admin', 'recepcionista'].includes(user.rol)) {
+            if (reserva.usuario_id && Number(reserva.usuario_id) !== Number(user.id)) {
+                throw new ServerError(403, 'Acceso denegado: no tienes permiso para eliminar esta reserva');
+            }
+        }
+
         return await this.reservaRepo.deleteById(id);
     }
 
@@ -192,12 +215,20 @@ export class ReservaService {
             throw new ServerError(400, 'La reserva ya está cancelada');
         }
 
-        if (user.rol === 'super_admin') {
+        // Blindaje IDOR: un usuario común solo puede cancelar su propia reserva;
+        // administradores y recepcionistas pueden cancelar cualquier reserva.
+        if (user && !['super_admin', 'recepcionista'].includes(user.rol)) {
+            if (reserva.usuario_id && Number(reserva.usuario_id) !== Number(user.id)) {
+                throw new ServerError(403, 'Acceso denegado: no tienes permiso para cancelar la reserva de otro usuario');
+            }
+        }
+
+        if (user && user.rol === 'super_admin') {
             await this.reservaRepo.updateById(id, { estado: 'Cancelado' });
             return { ok: true, tipo: reserva.tipo, con_aire: reserva.con_aire };
         }
 
-        if (user.rol === 'usuario' || user.rol === 'recepcionista') {
+        if (user && (user.rol === 'usuario' || user.rol === 'recepcionista')) {
             await this.reservaRepo.deleteById(id);
             return { ok: true, message: 'Reserva eliminada, horario disponible', tipo: reserva.tipo, con_aire: reserva.con_aire };
         }

@@ -31,7 +31,7 @@ class ReservaController {
     static async getById(req, res) {
         try {
             const { id } = req.params;
-            const reserva = await ReservaService.getById(id);
+            const reserva = await ReservaService.getById(id, req.user);
             res.json({ ok: true, reserva });
         } catch (error) {
             res.status(error.status || 500).json({
@@ -75,7 +75,7 @@ class ReservaController {
     static async update(req, res) {
         try {
             const { id } = req.params;
-            const result = await ReservaService.update(id, req.body);
+            const result = await ReservaService.update(id, req.body, req.user);
             res.json({ ok: true, reserva: result });
         } catch (error) {
             res.status(error.status || 500).json({
@@ -88,7 +88,7 @@ class ReservaController {
     static async delete(req, res) {
         try {
             const { id } = req.params;
-            await ReservaService.delete(id);
+            await ReservaService.delete(id, req.user);
             res.json({ ok: true, message: "Reserva eliminada con éxito" });
         } catch (error) {
             res.status(error.status || 500).json({
@@ -130,7 +130,7 @@ class ReservaController {
         }
     }
 
-    static async cancelar(req, res, next) {
+    static async cancelar(req, res) {
         try {
             const result = await ReservaService.cancelar(req.params.id, req.user);
 
@@ -144,7 +144,10 @@ class ReservaController {
                 apagarAireQuincho().catch(err => console.error("Shelly quincho no disponible:", err.message));
             }
         } catch (err) {
-            next(err);
+            res.status(err.status || 500).json({
+                ok: false,
+                message: err.message || "Error al cancelar reserva"
+            });
         }
     }
 

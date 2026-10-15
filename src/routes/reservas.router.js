@@ -39,7 +39,7 @@ reservasRouter.post(
 reservasRouter.put(
     "/:id",
     authMiddleware,
-    roleMiddleware('recepcionista', 'super_admin'),
+    roleMiddleware('usuario', 'recepcionista', 'super_admin'),
     ReservaController.update
 );
 
