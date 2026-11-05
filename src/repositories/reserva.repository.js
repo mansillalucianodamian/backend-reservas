@@ -75,6 +75,8 @@ export class ReservaRepository {
                 r.con_aire,
                 r.con_luz,
                 r.fecha_aprobacion,
+                u.dni,
+                u.telefono,
                 CONCAT(u.apellido, ', ', u.nombre) AS usuario
               FROM reservas r
               LEFT JOIN usuarios u ON r.usuario_id = u.id
@@ -261,7 +263,10 @@ export class ReservaRepository {
                 r.hora,
                 r.estado,
                 r.usuario_id,
+                r.motivo,
                 r.con_aire,
+                u.dni,
+                u.telefono,
                 CONCAT(u.apellido, ', ', u.nombre) AS usuario
               FROM reservas r
               LEFT JOIN usuarios u ON r.usuario_id = u.id
@@ -289,6 +294,8 @@ export class ReservaRepository {
                 r.con_aire,
                 r.con_luz,
                 r.fecha_aprobacion,
+                u.dni,
+                u.telefono,
                 CONCAT(u.apellido, ', ', u.nombre) AS usuario
               FROM reservas r
               LEFT JOIN usuarios u ON r.usuario_id = u.id
