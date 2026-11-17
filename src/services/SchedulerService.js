@@ -201,16 +201,10 @@ export async function checkActiveQuinchoAireReservation() {
 
             const startWindowMs = reservationStartMs - (5 * 60 * 1000); // 5 minutes buffer before start
             
-            // Duración del turno: 6 horas para diurno (10:00 a 16:00), 6 horas para nocturno (19:00 a 01:00)
-            let durationMs = 6 * 60 * 60 * 1000; // 6 horas estándar
-            if (h === 10) {
-                durationMs = 6 * 60 * 60 * 1000; // 10:00 a 16:00
-            } else if (h === 19) {
-                durationMs = 6 * 60 * 60 * 1000; // 19:00 a 01:00
-            } else if (h === 9) {
-                // Retrocompatibilidad con reservas previas creadas a las 09:00
-                durationMs = 7 * 60 * 60 * 1000;
-            }
+            // El quincho se alquila una sola vez en el día a partir de la hora de inicio elegida.
+            // Habilitamos el aire acondicionado desde la hora de inicio hasta las 02:00 AM del día siguiente.
+            const horasHastaCierre = Math.max(6, 26 - h);
+            const durationMs = horasHastaCierre * 60 * 60 * 1000;
 
             const endWindowMs = reservationStartMs + durationMs + (10 * 60 * 1000); // Duración + 10 min de gracia
 

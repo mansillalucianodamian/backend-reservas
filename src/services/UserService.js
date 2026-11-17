@@ -45,7 +45,7 @@ class UserService {
     }
 
     static async assignRole(id, rol) {
-        const valid_roles = ['usuario', 'recepcionista', 'super_admin'];
+        const valid_roles = ['usuario', 'boletero', 'recepcionista', 'super_admin', 'bloqueado'];
         if (!valid_roles.includes(rol)) {
             throw new ServerError(400, 'Rol inválido');
         }

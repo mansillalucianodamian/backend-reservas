@@ -25,9 +25,13 @@ describe('Suite de Estrategia de Quincho (QuinchoStrategy - SOLID & SRP)', () =>
         expect(quinchoStrategy.tipo).toBe('quincho');
     });
 
-    it('debe retornar los turnos estándar de quincho (10:00 y 19:00)', () => {
+    it('debe retornar los horarios de inicio estándar de quincho (08:00 a 22:00)', () => {
         const horarios = quinchoStrategy.getHorariosEstandar();
-        expect(horarios).toEqual(['10:00', '19:00']);
+        expect(horarios).toEqual([
+            '08:00', '09:00', '10:00', '11:00', '12:00',
+            '13:00', '14:00', '15:00', '16:00', '17:00',
+            '18:00', '19:00', '20:00', '21:00', '22:00'
+        ]);
     });
 
     describe('Regla de Exclusividad Diaria', () => {

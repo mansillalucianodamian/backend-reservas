@@ -8,6 +8,7 @@ import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.router.js';
 import reservasRouter from './routes/reservas.router.js';
 import configRouter from './routes/config.router.js';
+import piletaRouter from './routes/pileta.router.js';
 import ConfigController from './controllers/config.controller.js';
 import { apiLimiter, loginLimiter } from './middlewares/rateLimiter.middleware.js';
 import { apagarLuz, encenderLuz, encenderAireQuincho, apagarAireQuincho } from './services/ShellyService.js';
@@ -49,6 +50,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/reservas', reservasRouter);
 app.use('/api/configuracion', configRouter);
+app.use('/api/pileta', piletaRouter);
 
 // Endpoint de prueba para verificar conexión MySQL (Clean Architecture - delegado a ConfigController/Service)
 app.get('/ping', (req, res, next) => ConfigController.ping(req, res, next));

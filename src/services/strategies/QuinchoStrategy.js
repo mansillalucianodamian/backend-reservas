@@ -11,10 +11,15 @@ export class QuinchoStrategy {
     }
 
     /**
-     * Retorna los turnos estándares de quincho (Día: 10:00, Noche: 19:00).
+     * Retorna los horarios de inicio posibles para el quincho (08:00 a 22:00 hs).
+     * El alquiler es único por día sin importar el horario de salida.
      */
     getHorariosEstandar() {
-        return ['10:00', '19:00'];
+        return [
+            '08:00', '09:00', '10:00', '11:00', '12:00',
+            '13:00', '14:00', '15:00', '16:00', '17:00',
+            '18:00', '19:00', '20:00', '21:00', '22:00'
+        ];
     }
 
     /**
@@ -86,7 +91,7 @@ export class QuinchoStrategy {
     /**
      * Calcula la disponibilidad horaria para un día específico
      */
-    calcularDisponibilidadHorarios(fecha, reservas, todosHorarios = ['10:00', '19:00']) {
+    calcularDisponibilidadHorarios(fecha, reservas, todosHorarios = this.getHorariosEstandar()) {
         const cleanFecha = typeof fecha === 'string' ? fecha.split('T')[0] : fecha;
         const ocupados = (reservas || []).filter(r =>
             r.tipo === 'quincho' && ['pendiente', 'aprobado', 'bloqueado'].includes((r.estado || '').toLowerCase())
